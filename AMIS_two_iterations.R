@@ -135,26 +135,8 @@ param[1:N[1],4]<- w
 
 prop<-param[1:N[1],]
 
-# Calculate effective sample size
-ess<-c()
-WW<-matrix(NA, nrow=n.pixels, ncol=sum(N[1]))
-for(i in 1:n.pixels){
-  w<-sapply(1:length(ans), function(j) length(which((prev[i,]>ans[j]-delta/2) &(prev[i,]<=ans[j]+delta/2)))/length(which((ans>ans[j]-delta/2) & (ans<=ans[j]+delta/2))))   # don't need to weight g because first iteration
-  #ww<-w/(prop.val);   # SP: don't understand this step
-  ww<-w
-  if(sum(ww)>0){
-    ww<-ww/sum(ww)
-  }
-  WW[i,]<-ww
-  if( sum(ww)==0){
-    www<-0
-  } else {
-    www<-(sum((ww)^2))^(-1)
-  }
-  ess<-c(ess, www)
-  #cat(c(t, "", i,"", www,"\n"))
-}
-
+first_weight <- rep(1, N[1])
+WW <- trachomAMIS::compute_weight_matrix(prev, ans, delta, first_weight)
 
 cat( min(ess),  "", max(ess), "\n")
 
