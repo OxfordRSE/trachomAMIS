@@ -123,10 +123,8 @@ write.csv(input_params, file=inputbeta, row.names=FALSE)
 ### Run Python
 
 ### read in python output file
-prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g_it1.csv", scenario_id, group_id)
-res <- read.csv(prevalence_output)
-ans <- 100*res[,dim(res)[2]]
-
+output_file <- sprintf("output/OutputPrev_scen%g_group%g_it1.csv", scenario_id, group_id)
+ans <- trachomAMIS::read_simulated_prevalence(output_file)
 
 w<-sapply(1:length(ans), function(i) length(which((prev>ans[i]-delta/2) &(prev<=ans[i]+delta/2)))/length(which((ans>ans[i]-delta/2) & (ans<=ans[i]+delta/2))))   #weights over all IUs
 
