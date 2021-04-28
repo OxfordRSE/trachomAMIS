@@ -24,3 +24,17 @@ compute_weight_matrix <- function(prev_data, prev_sim, delta, first_weight) {
     }
     return(weight_mat)
 }
+
+#' @export
+calculate_ess <- function(weight_mat) {
+    ess_for_IU <- function(weights_for_IU) {
+        if(sum(weights_for_IU) == 0) return(0)
+        return(
+            (sum((weights_for_IU)^2))^(-1)
+        )
+    }
+
+    return(
+        apply(weight_mat, 1, ess_for_IU)
+    )
+}
