@@ -39,6 +39,10 @@ calculate_ess <- function(weight_mat) {
     )
 }
 
+dprop0<-function(a,b){
+    return(dunif(a, min=0.05, max=0.175)*dunif(b, min=0, max=1))
+}
+
 #' @export
 sample_new_parameters <- function(clustMix, n_samples) {
     x <- c(); y <- c()
