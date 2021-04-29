@@ -191,16 +191,8 @@ param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
 first_weight <- trachomAMIS::compute_prior_proposal_ratio(clustMix, t, T, N, beta = param[,1], constant = param[,2])
 
 ans<-param[1:sum(N[1:(t)]),3]
-
-ess<-c()
-WW<-matrix(NA, nrow=n.pixels, ncol=sum(N[1:(t)]))
-for(i in 1:n.pixels){
-    w<-sapply(1:length(ans), function(j) length(which((prev[i,]>ans[j]-delta/2) &(prev[i,]<=ans[j]+delta/2)))/sum(first_weight[which((ans>ans[j]-delta/2) & (ans<=ans[j]+delta/2))]) )   # f/g from AMIS paper #### FIX
-    ww<-w*first_weight; ww<-ww/sum(ww)  # second weighting, normalizing
-    WW[i,]<-ww
-    www<-(sum((ww)^2))^(-1)
-    ess<-c(ess, www)
-}
+WW <- trachomAMIS::compute_weight_matrix(prev, ans, delta, first_weight)
+ess <- trachomAMIS::calculate_ess(WW)
 
 cat( c("min(ESS)=", min(ess),  ", max(ESS)=", max(ess), "\n"))
 
