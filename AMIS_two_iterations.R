@@ -158,8 +158,6 @@ J<-sample(1:sum(N[1:(t-1)]), NN, prob= w1, replace=T)
 xx<-param[J,1:2]
 clustMix <- mixture(xx)
 
-G <- clustMix$G
-cluster <- clustMix$cluster
 sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
 
 ### Components of the mixture

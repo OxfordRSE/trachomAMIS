@@ -74,6 +74,7 @@ compute_prior_proposal_ratio <- function(clustMix, t, T, N, beta, constant) {
     ppt <- clustMix$alpha
     muHatt <- clustMix$muHat
     varHatt <- clustMix$SigmaHat
+    G <- clustMix$G
     GG<-list(NA,T)
     GG[[t-1]]<-G
     G1<-0; G2<-G
