@@ -3,3 +3,4 @@
 export(calculate_ess)
 export(compute_weight_matrix)
 export(read_simulated_prevalence)
+export(sample_new_parameters)

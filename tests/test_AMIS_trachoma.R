@@ -1,4 +1,5 @@
 library(testthat)
+devtools::load_all()
 
 source("./AMIS_two_iterations.R")
 

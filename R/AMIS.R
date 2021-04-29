@@ -38,3 +38,22 @@ calculate_ess <- function(weight_mat) {
         apply(weight_mat, 1, ess_for_IU)
     )
 }
+
+#' @export
+sample_new_parameters <- function(clustMix, n_samples) {
+    x <- c(); y <- c()
+    while(length(x)<n_samples){
+        compo <- sample(1:clustMix$G,1,prob=clustMix$alpha)
+        x1 <- t(
+            rprop(1,clustMix$muHat[compo,], clustMix$SigmaHat[,,compo])
+        )
+        new.param<-as.numeric(x1)
+        if(dprop0(new.param[1],new.param[2])>0){
+            x<-c(x, new.param[1])
+            y<-c(y, new.param[2])
+        }
+    }
+    return(
+        list(beta=x, constant=y)
+    )
+}

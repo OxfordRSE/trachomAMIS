@@ -171,6 +171,7 @@ clustMix <- mixture(xx)
 
 G <- clustMix$G
 cluster <- clustMix$cluster
+sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
 
 ### Components of the mixture
 ppt <- clustMix$alpha
@@ -188,26 +189,13 @@ for(i in 1:G){
     PP[[i+G1]]<-ppt[i]   ### scale by number of points
 }
 
-### Sample new from the mixture...
-ans<-c(); x<-c(); y<-c()
-print("start sampling")
-print(Sys.time())
-while(length(x)<N[t]){
-    compo <- sample(1:G,1,prob=ppt)
-    x1 <- t(rprop(1,muHatt[compo,], varHatt[,,compo]))
-    new.param<-as.numeric(x1)
-    if(dprop0(new.param[1],new.param[2])>0){
-        x<-c(x, new.param[1])
-        y<-c(y, new.param[2])
-    }
-    i<-i+1
-}
+
 print("done sampling")
 print(Sys.time())
 
 seed <- c((max(seed)+1): (max(seed)+N[t]))
 allseed <- c(allseed, seed)
-input_params <- cbind(seed, x)
+input_params <- cbind(seed, sampled_params$beta)
 colnames(input_params) = c("randomgen", "bet")
 
 inputbeta <- sprintf("files/InputBet_scen%g_group%g_it2.csv", scenario_id, group_id)
@@ -217,8 +205,8 @@ prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g_it2.csv", scenari
 res <- read.csv(prevalence_output) # read python output file
 ans <- 100*res[,dim(res)[2]]
 
-param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-x
-param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-y
+param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-sampled_params$beta
+param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
 param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
 
 prop.val <- sapply(1:sum(N[1:t]),function(b)  sum(sapply(1:G2, function(g) PP[[g]] * dprop(param[b,1:2],mu= Mean[[g]], Sig=Sigma[[g]]))) + dprop0(param[b,1], param[b,2]))   ## FIX to be just the proposal density ALSO scale by number of points
