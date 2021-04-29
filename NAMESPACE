@@ -3,6 +3,7 @@
 export(calculate_ess)
 export(compute_prior_proposal_ratio)
 export(compute_weight_matrix)
+export(evaluate_mixture)
 export(read_simulated_prevalence)
 export(sample_new_parameters)
 export(write_model_input)

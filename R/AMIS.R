@@ -51,6 +51,18 @@ dprop0<-function(a,b){
 }
 
 #' @export
+evaluate_mixture <- function(parameters, nsamples, weight_matrix, mixture) {
+    sampled_idx <- sample(
+        1:dim(parameters)[1],
+        nsamples,
+        prob = colSums(weight_matrix),
+        replace = T)
+    return(
+        mixture(parameters[sampled_idx,])
+    )
+}
+
+#' @export
 sample_new_parameters <- function(clustMix, n_samples) {
     x <- c(); y <- c()
     while(length(x)<n_samples){
