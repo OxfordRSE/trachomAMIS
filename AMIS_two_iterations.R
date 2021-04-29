@@ -148,11 +148,10 @@ stop<-0
 t<-t+1
 cat(c("Iteration: ", t,", min(ESS): ", min(ess),"\n"))
 
-wh<-which(ess>=ESS.R)
-W1<-WW; W1[wh,]<-0
+WW <- update_according_to_ess_value(WW, ess, ESS.R)
 
 parameters <- param[1:sum(N[1:(t-1)]),1:2]
-clustMix <- trachomAMIS::evaluate_mixture(parameters, NN, W1, mixture)
+clustMix <- trachomAMIS::evaluate_mixture(parameters, NN, WW, mixture)
 sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
 
 ### Components of the mixture

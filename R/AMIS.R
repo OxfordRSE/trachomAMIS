@@ -51,6 +51,13 @@ dprop0<-function(a,b){
 }
 
 #' @export
+update_according_to_ess_value <- function(weight_matrix, ess, target_size) {
+    rows_to_nullify <- which(ess >= target_size)
+    weight_matrix[rows_to_nullify,] <- 0
+    return(weight_matrix)
+}
+
+#' @export
 evaluate_mixture <- function(parameters, nsamples, weight_matrix, mixture) {
     sampled_idx <- sample(
         1:dim(parameters)[1],
