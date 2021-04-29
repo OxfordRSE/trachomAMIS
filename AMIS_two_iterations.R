@@ -104,13 +104,12 @@ t<-1  # Iteration
 tmp<-rprop0(N[t])    #N[t] random draws of parameters from prior
 x <- tmp[[1]]  # bet
 y <- tmp[[2]]  # constant
-seed <- c(1:N[t])
-allseed <- seed
-input_params <- cbind(seed, x)
-colnames(input_params) = c("randomgen", "bet")
 
+seeds <- 1:N[t]
+allseeds <- seeds
 inputbeta <- sprintf("files/InputBet_scen%g_group%g_it1.csv", scenario_id, group_id)
-write.csv(input_params, file=inputbeta, row.names=FALSE)
+trachomAMIS::write_model_input(seeds, x, inputbeta)
+
 
 ### Run Python
 
@@ -171,13 +170,10 @@ sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
 print("done sampling")
 print(Sys.time())
 
-seed <- c((max(seed)+1): (max(seed)+N[t]))
-allseed <- c(allseed, seed)
-input_params <- cbind(seed, sampled_params$beta)
-colnames(input_params) = c("randomgen", "bet")
-
+seeds <- c((max(seeds)+1): (max(seeds)+N[t]))
+allseeds <- c(allseeds, seeds)
 inputbeta <- sprintf("files/InputBet_scen%g_group%g_it2.csv", scenario_id, group_id)
-write.csv(input_params, file=inputbeta, row.names=FALSE)
+trachomAMIS::write_model_input(seeds, sampled_params$beta, inputbeta)
 
 prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g_it2.csv", scenario_id, group_id)
 res <- read.csv(prevalence_output) # read python output file
