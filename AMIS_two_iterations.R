@@ -176,8 +176,7 @@ inputbeta <- sprintf("files/InputBet_scen%g_group%g_it2.csv", scenario_id, group
 trachomAMIS::write_model_input(seeds, sampled_params$beta, inputbeta)
 
 prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g_it2.csv", scenario_id, group_id)
-res <- read.csv(prevalence_output) # read python output file
-ans <- 100*res[,dim(res)[2]]
+ans <- trachomAMIS::read_simulated_prevalence(prevalence_output)
 
 param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-sampled_params$beta
 param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
