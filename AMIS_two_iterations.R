@@ -124,8 +124,6 @@ param[1:N[1],2]<-y
 param[1:N[1],3]<-ans
 param[1:N[1],4]<- w
 
-prop<-param[1:N[1],]
-
 first_weight <- rep(1, N[1])
 WW <- trachomAMIS::compute_weight_matrix(prev, ans, delta, first_weight)
 ess <- trachomAMIS::calculate_ess(WW)
