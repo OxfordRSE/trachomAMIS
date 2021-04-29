@@ -61,3 +61,31 @@ sample_new_parameters <- function(clustMix, n_samples) {
         list(beta=x, constant=y)
     )
 }
+
+#' @export
+compute_prior_proposal_ratio <- function(clustMix, t, T, N, beta, constant) {
+    ppt <- clustMix$alpha
+    muHatt <- clustMix$muHat
+    varHatt <- clustMix$SigmaHat
+    GG<-list(NA,T)
+    GG[[t-1]]<-G
+    G1<-0; G2<-G
+    if(t>2) {
+        G1<-sum(sapply(1:(t-2), function(a) GG[[a]]))
+        G2<-sum(sapply(1:(t-1), function(a) GG[[a]]))
+    }
+    Sigma <- list(NA, 10*T)
+    Mean<-list(NA, 10*T)
+    PP<-list(NA,T)
+    for(i in 1:G){
+        Sigma[[i+G1]] <- varHatt[,,i]
+        Mean[[i+G1]] <- muHatt[i,]
+        PP[[i+G1]]<-ppt[i]   ### scale by number of points
+    }
+
+    prop.val <- sapply(1:sum(N[1:t]),function(b)  sum(sapply(1:G2, function(g) PP[[g]] * dprop(c(beta[b], constant[b]),mu= Mean[[g]], Sig=Sigma[[g]]))) + dprop0(beta[b], constant[b]))   ## FIX to be just the proposal density ALSO scale by number of points
+
+    first_weight <- sapply(1:sum(N[1:t]), function(b) dprop0(beta[b], constant[b])/prop.val[b])   # prior/proposal
+
+    return(first_weight)
+}

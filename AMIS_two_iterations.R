@@ -67,10 +67,6 @@ prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g.csv", scenario_id
 
 source("AMIS_source.R")  # source code for AMIS
 
-# function to draw from prior
-dprop0<-function(a,b){
-  return(dunif(a, min=0.05, max=0.175)*dunif(b, min=0, max=1))
-}
 rprop0<-function(n){
   return(list(runif(n, min=0.05, max=0.175), runif(n, min=0, max=1)))
 }
@@ -99,10 +95,6 @@ dprop <- proposal$d
 rprop <- proposal$r
 
 param<-matrix(NA, ncol=n.param+1+1, nrow=sum(N))  # Matrix for parameter values, + prevalence and weights
-Sigma <- list(NA, 10*T)
-Mean<-list(NA, 10*T)
-PP<-list(NA,T)
-GG<-list(NA,T)
 
 
 ###################################################################
@@ -174,20 +166,6 @@ cluster <- clustMix$cluster
 sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
 
 ### Components of the mixture
-ppt <- clustMix$alpha
-muHatt <- clustMix$muHat
-varHatt <- clustMix$SigmaHat
-GG[[t-1]]<-G
-G1<-0; G2<-G
-if(t>2) {
-    G1<-sum(sapply(1:(t-2), function(a) GG[[a]]))
-    G2<-sum(sapply(1:(t-1), function(a) GG[[a]]))
-}
-for(i in 1:G){
-    Sigma[[i+G1]] <- varHatt[,,i]
-    Mean[[i+G1]] <- muHatt[i,]
-    PP[[i+G1]]<-ppt[i]   ### scale by number of points
-}
 
 
 print("done sampling")
@@ -209,10 +187,8 @@ param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-sampled_params$beta
 param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
 param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
 
-prop.val <- sapply(1:sum(N[1:t]),function(b)  sum(sapply(1:G2, function(g) PP[[g]] * dprop(param[b,1:2],mu= Mean[[g]], Sig=Sigma[[g]]))) + dprop0(param[b,1], param[b,2]))   ## FIX to be just the proposal density ALSO scale by number of points
 
-first_weight <- sapply(1:sum(N[1:t]), function(b) dprop0(param[b,1], param[b,2])/prop.val[b])   # prior/proposal
-
+first_weight <- trachomAMIS::compute_prior_proposal_ratio(clustMix, t, T, N, beta = param[,1], constant = param[,2])
 
 ans<-param[1:sum(N[1:(t)]),3]
 
