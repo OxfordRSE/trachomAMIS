@@ -1,4 +1,3 @@
-#' @export
 write_model_input <- function(seeds, parameters, input_file) {
     input_params <- cbind(seeds, parameters)
     colnames(input_params) = c("randomgen", "bet")
@@ -6,7 +5,9 @@ write_model_input <- function(seeds, parameters, input_file) {
 }
 
 #' @export
-read_simulated_prevalence <- function(output_file) {
+run_transmission_model <- function(seeds, parameters, input_file, output_file) {
+    write_model_input(seeds, parameters, input_file)
+    ## Run model
     res <- read.csv(output_file)
     return(100*res[,dim(res)[2]])
 }

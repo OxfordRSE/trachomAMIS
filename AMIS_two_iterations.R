@@ -106,16 +106,9 @@ x <- tmp[[1]]  # bet
 y <- tmp[[2]]  # constant
 
 seeds <- 1:N[t]
-allseeds <- seeds
 inputbeta <- sprintf("files/InputBet_scen%g_group%g_it1.csv", scenario_id, group_id)
-trachomAMIS::write_model_input(seeds, x, inputbeta)
-
-
-### Run Python
-
-### read in python output file
 output_file <- sprintf("output/OutputPrev_scen%g_group%g_it1.csv", scenario_id, group_id)
-ans <- trachomAMIS::read_simulated_prevalence(output_file)
+ans <- trachomAMIS::run_transmission_model(seeds, x, inputbeta, output_file)
 
 w<-sapply(1:length(ans), function(i) length(which((prev>ans[i]-delta/2) &(prev<=ans[i]+delta/2)))/length(which((ans>ans[i]-delta/2) & (ans<=ans[i]+delta/2))))   #weights over all IUs
 
@@ -156,17 +149,13 @@ sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
 
 ### Components of the mixture
 
-
 print("done sampling")
 print(Sys.time())
 
 seeds <- c((max(seeds)+1): (max(seeds)+N[t]))
-allseeds <- c(allseeds, seeds)
 inputbeta <- sprintf("files/InputBet_scen%g_group%g_it2.csv", scenario_id, group_id)
-trachomAMIS::write_model_input(seeds, sampled_params$beta, inputbeta)
-
-prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g_it2.csv", scenario_id, group_id)
-ans <- trachomAMIS::read_simulated_prevalence(prevalence_output)
+output_file <- sprintf("output/OutputPrev_scen%g_group%g_it2.csv", scenario_id, group_id)
+ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, inputbeta, output_file)
 
 param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-sampled_params$beta
 param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
