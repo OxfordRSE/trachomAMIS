@@ -129,9 +129,10 @@ ESS<-matrix(ess, nrow=1, ncol=n.pixels)
 list_of_ESS <- list(ESS)
 list_of_params <- list(param[1:N[1],1:3])
 
+
+set.seed(iscen)
 for (t in 2:T) {
-    set.seed(iscen)
-    
+
     WW <- update_according_to_ess_value(WW, ess, ESS.R)
     parameters <- param[1:sum(N[1:(t-1)]),1:2]
     clustMix <- trachomAMIS::evaluate_mixture(parameters, NN, WW, mixture)
