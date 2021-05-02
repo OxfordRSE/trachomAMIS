@@ -14,8 +14,9 @@ read_file <- function(iter, prefix) {
 betas <- lapply(1:5, read_file, "./files/InputBet_scen36_group2")
 expected_betas <- lapply(1:5, read_file, "./tests/test_data/InputBet_scen36_group2")
 
-expect_equal(beta_iter_1, expected_beta_iter_1)
-expect_equal(beta_iter_2, expected_beta_iter_2)
+for (i in 1:5) {
+    expect_equal(expected_betas, betas)
+}
 
 ### Test Effective Sample Size (ESS) and content of `param` matrix
 ### for first two iterations of AMIS
@@ -32,7 +33,8 @@ expected_ESS <- lapply(1:5, read_matrix, "./tests/test_data/ESS", list_of_ESS)
 expected_param <- lapply(1:5, read_matrix, "./tests/test_data/param", list_of_params)
 
 for (t in 1:5) {
-    TRUE
+    expect_equal(expected_ESS[[t]], list_of_ESS[[t]])
+    expect_equal(expected_param[[t]], list_of_params[[t]][,1:3])
 }
 
 
