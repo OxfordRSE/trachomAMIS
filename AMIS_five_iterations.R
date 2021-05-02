@@ -140,8 +140,8 @@ for (t in 2:T) {
     param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
 
     seeds <- c((max(seeds)+1): (max(seeds)+N[t]))
-    inputbeta <- sprintf("files/InputBet_scen%g_group%g_it2.csv", scenario_id, group_id)
-    output_file <- sprintf("output/OutputPrev_scen%g_group%g_it2.csv", scenario_id, group_id)
+    inputbeta <- sprintf("files/InputBet_scen%g_group%g_it%g.csv", scenario_id, group_id, t)
+    output_file <- sprintf("output/OutputPrev_scen%g_group%g_it%g.csv", scenario_id, group_id, t)
     ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, inputbeta, output_file)
     param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
 
