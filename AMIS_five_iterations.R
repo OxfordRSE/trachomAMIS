@@ -155,8 +155,8 @@ for (t in 2:T) {
 
     ESS<-rbind(ESS, as.numeric(ess))
 
-    list_of_ESS[[t]] <- list(ESS)
-    list_of_params[[t]] <- list(param[sum(N[1:t]),1:3])
+    list_of_ESS[[t]] <- ESS
+    list_of_params[[t]] <- param[1:sum(N[1:t]),1:3]
 
     if(min(ess) >= ESS.R) break
 }
