@@ -129,6 +129,10 @@ ESS<-matrix(ess, nrow=1, ncol=n.pixels)
 list_of_ESS <- list(ESS)
 list_of_params <- list(param[1:N[1],1:3])
 
+GG<-list(NA,T)
+Sigma <- list(NA, 10*T)
+Mean<-list(NA, 10*T)
+PP<-list(NA,T)
 
 set.seed(iscen)
 for (t in 2:T) {
