@@ -78,7 +78,7 @@ ESS.R<-250 # Desired effective sample
 delta<-5 # delta value (width for the Radon-Nikodym derivative) %
 n.param<-2
 
-T<-100; # max number of iterations
+T<-5; # max number of iterations
 NN<-100  # Number of parameter sets in each iteration
 N<-rep(NN,T)  # This allows to have different number of parameters sampled each iteration. Here it's the same  # different number of iterations might break code
 #N[1] <- 50
@@ -126,56 +126,37 @@ cat( min(ess),  "", max(ess), "\n")
 ESS<-matrix(ess, nrow=1, ncol=n.pixels)
 ### Copy variables for testing
 ### See tests/test_AMIS_trachoma.R
-ESS_iteration_1 <- ESS
-param_iteration_1 <- param[1:N[1],]
+list_of_ESS <- list(ESS)
+list_of_params <- list(param[1:N[1],1:3])
 
+for (t in 2:T) {
+    set.seed(iscen)
+    
+    WW <- update_according_to_ess_value(WW, ess, ESS.R)
+    parameters <- param[1:sum(N[1:(t-1)]),1:2]
+    clustMix <- trachomAMIS::evaluate_mixture(parameters, NN, WW, mixture)
+    sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
+    param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-sampled_params$beta
+    param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
 
+    seeds <- c((max(seeds)+1): (max(seeds)+N[t]))
+    inputbeta <- sprintf("files/InputBet_scen%g_group%g_it2.csv", scenario_id, group_id)
+    output_file <- sprintf("output/OutputPrev_scen%g_group%g_it2.csv", scenario_id, group_id)
+    ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, inputbeta, output_file)
+    param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
 
-###################################################################
-#          Iteration 2+
-####################################################################
+    first_weight <- trachomAMIS::compute_prior_proposal_ratio(clustMix, t, T, N, beta = param[,1], constant = param[,2])
 
-set.seed(iscen)
-stop<-0
-  
-t<-t+1
-cat(c("Iteration: ", t,", min(ESS): ", min(ess),"\n"))
+    all_sim_prevs<-param[1:sum(N[1:(t)]),3]
+    WW <- trachomAMIS::compute_weight_matrix(prev, all_sim_prevs, delta, first_weight)
+    ess <- trachomAMIS::calculate_ess(WW)
 
-WW <- update_according_to_ess_value(WW, ess, ESS.R)
+    cat( c("min(ESS)=", min(ess),  ", max(ESS)=", max(ess), "\n"))
 
-parameters <- param[1:sum(N[1:(t-1)]),1:2]
-clustMix <- trachomAMIS::evaluate_mixture(parameters, NN, WW, mixture)
-sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
+    ESS<-rbind(ESS, as.numeric(ess))
 
-### Components of the mixture
+    list_of_ESS[[t]] <- list(ESS)
+    list_of_params[[t]] <- list(param[sum(N[1:t]),1:3])
 
-print("done sampling")
-print(Sys.time())
-
-seeds <- c((max(seeds)+1): (max(seeds)+N[t]))
-inputbeta <- sprintf("files/InputBet_scen%g_group%g_it2.csv", scenario_id, group_id)
-output_file <- sprintf("output/OutputPrev_scen%g_group%g_it2.csv", scenario_id, group_id)
-ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, inputbeta, output_file)
-
-param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-sampled_params$beta
-param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
-param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
-
-
-first_weight <- trachomAMIS::compute_prior_proposal_ratio(clustMix, t, T, N, beta = param[,1], constant = param[,2])
-
-ans<-param[1:sum(N[1:(t)]),3]
-WW <- trachomAMIS::compute_weight_matrix(prev, ans, delta, first_weight)
-ess <- trachomAMIS::calculate_ess(WW)
-
-cat( c("min(ESS)=", min(ess),  ", max(ESS)=", max(ess), "\n"))
-
-ESS<-rbind(ESS, as.numeric(ess))
-
-w1<-c(colSums(WW))
-param[1:sum(N[1:(t)]),4]<-w1
-
-### Copy variables for testing
-### See tests/test_AMIS_trachoma.R
-ESS_iteration_2 <- ESS
-param_iteration_2 <- param[1:N[1],]
+    if(min(ess) >= ESS.R) break
+}
