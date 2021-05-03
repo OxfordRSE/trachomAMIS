@@ -53,6 +53,10 @@ dprop0<-function(a,b){
     return(dunif(a, min=0.05, max=0.175)*dunif(b, min=0, max=1))
 }
 
+rprop0<-function(n){
+  return(list(runif(n, min=0.05, max=0.175), runif(n, min=0, max=1)))
+}
+
 #' @export
 update_according_to_ess_value <- function(weight_matrix, ess, target_size) {
     rows_to_nullify <- which(ess >= target_size)
