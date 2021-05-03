@@ -110,12 +110,9 @@ inputbeta <- sprintf("files/InputBet_scen%g_group%g_it1.csv", scenario_id, group
 output_file <- sprintf("output/OutputPrev_scen%g_group%g_it1.csv", scenario_id, group_id)
 ans <- trachomAMIS::run_transmission_model(seeds, x, inputbeta, output_file)
 
-w<-sapply(1:length(ans), function(i) length(which((prev>ans[i]-delta/2) &(prev<=ans[i]+delta/2)))/length(which((ans>ans[i]-delta/2) & (ans<=ans[i]+delta/2))))   #weights over all IUs
-
 param[1:N[1],1]<-x
 param[1:N[1],2]<-y
 param[1:N[1],3]<-ans
-param[1:N[1],4]<- w
 
 first_weight <- rep(1, N[1])
 WW <- trachomAMIS::compute_weight_matrix(prev, ans, delta, first_weight)
