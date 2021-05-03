@@ -5,9 +5,11 @@ write_model_input <- function(seeds, parameters, input_file) {
 }
 
 #' @export
-run_transmission_model <- function(seeds, parameters, input_file, output_file) {
+run_transmission_model <- function(seeds, parameters, id) {
+    input_file <- paste("files/InputBet_", id, ".csv", sep = "")
     write_model_input(seeds, parameters, input_file)
     ## Run model
+    output_file <- paste("output/OutputPrev_", id, ".csv", sep = "")
     res <- read.csv(output_file)
     return(100*res[,dim(res)[2]])
 }

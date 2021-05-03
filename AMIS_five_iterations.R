@@ -96,6 +96,9 @@ rprop <- proposal$r
 
 param<-matrix(NA, ncol=n.param+1+1, nrow=sum(N))  # Matrix for parameter values, + prevalence and weights
 
+IO_files_id <- function(t) {
+    sprintf("scen%g_group%g_it%g", scenario_id, group_id, t)
+}
 
 ###################################################################
 #          Iteration 1.
@@ -106,9 +109,7 @@ x <- tmp[[1]]  # bet
 y <- tmp[[2]]  # constant
 
 seeds <- 1:N[t]
-inputbeta <- sprintf("files/InputBet_scen%g_group%g_it1.csv", scenario_id, group_id)
-output_file <- sprintf("output/OutputPrev_scen%g_group%g_it1.csv", scenario_id, group_id)
-ans <- trachomAMIS::run_transmission_model(seeds, x, inputbeta, output_file)
+ans <- trachomAMIS::run_transmission_model(seeds, x, IO_files_id(1))
 
 param[1:N[1],1]<-x
 param[1:N[1],2]<-y
@@ -142,9 +143,7 @@ for (t in 2:T) {
     param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
 
     seeds <- c((max(seeds)+1): (max(seeds)+N[t]))
-    inputbeta <- sprintf("files/InputBet_scen%g_group%g_it%g.csv", scenario_id, group_id, t)
-    output_file <- sprintf("output/OutputPrev_scen%g_group%g_it%g.csv", scenario_id, group_id, t)
-    ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, inputbeta, output_file)
+    ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, IO_files_id(t))
     param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
 
     first_weight <- trachomAMIS::compute_prior_proposal_ratio(clustMix, t, T, N, beta = param[,1], constant = param[,2])
