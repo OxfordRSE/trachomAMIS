@@ -138,7 +138,7 @@ for (t in 2:T) {
     WW <- update_according_to_ess_value(WW, ess, ESS.R)
     parameters <- param[1:sum(N[1:(t-1)]),1:2]
     clustMix <- trachomAMIS::evaluate_mixture(parameters, NN, WW, mixture)
-    sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t])
+    sampled_params <- trachomAMIS::sample_new_parameters(clustMix, N[t], rprop)
     param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-sampled_params$beta
     param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
 
@@ -146,7 +146,7 @@ for (t in 2:T) {
     ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, IO_files_id(t))
     param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
 
-    first_weight <- trachomAMIS::compute_prior_proposal_ratio(clustMix, t, T, N, beta = param[,1], constant = param[,2])
+    first_weight <- trachomAMIS::compute_prior_proposal_ratio(clustMix, t, T, N, beta = param[,1], constant = param[,2], dprop)
 
     all_sim_prevs<-param[1:sum(N[1:(t)]),3]
     WW <- trachomAMIS::compute_weight_matrix(prev, all_sim_prevs, delta, first_weight)

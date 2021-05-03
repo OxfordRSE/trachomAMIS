@@ -73,7 +73,7 @@ evaluate_mixture <- function(parameters, nsamples, weight_matrix, mixture) {
 }
 
 #' @export
-sample_new_parameters <- function(clustMix, n_samples) {
+sample_new_parameters <- function(clustMix, n_samples, rprop) {
     x <- c(); y <- c()
     while(length(x)<n_samples){
         compo <- sample(1:clustMix$G,1,prob=clustMix$alpha)
@@ -92,7 +92,7 @@ sample_new_parameters <- function(clustMix, n_samples) {
 }
 
 #' @export
-compute_prior_proposal_ratio <- function(clustMix, t, T, N, beta, constant) {
+compute_prior_proposal_ratio <- function(clustMix, t, T, N, beta, constant, dprop) {
     ppt <- clustMix$alpha
     muHatt <- clustMix$muHat
     varHatt <- clustMix$SigmaHat
