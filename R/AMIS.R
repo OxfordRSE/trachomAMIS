@@ -49,5 +49,5 @@ amis <- function(prevalence_map, transmission_model, n_params, N, IO_file_id, de
         if(min(ess) >= target_ess) break
     }
 
-    return(param)
+    return(param[,1:3])
 }
