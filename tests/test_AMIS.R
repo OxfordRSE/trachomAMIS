@@ -60,3 +60,9 @@ prev <- sample_prevalence_map_at_IUs(IU_scen, n.map.sampl = 3000, scenario_id)
 T <- 5
 N<-rep(100,T)
 param <- trachomAMIS::amis(prevalence_map = prev, transmission_model = NULL, n_params = 2, N = N, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
+
+expected_param <- matrix(scan("./tests/test_data/param_iteration_5.csv"),
+                         nrow = 500,
+                         ncol = 3,
+                         byrow = TRUE)
+testthat::expect_equal(param, expected_param)
