@@ -19,8 +19,11 @@ amis <- function(prevalence_map, transmission_model, n_params, N, IO_file_id, de
     Sigma <- list(NA, 10*T)
     Mean<-list(NA, 10*T)
     PP<-list(NA,T)
-
-    # Set distribution for proposal: Student's t distribution
+    components <- list(GG = GG,
+                       Sigma = Sigma,
+                       Mean = Mean,
+                       PP = PP)
+                                        # Set distribution for proposal: Student's t distribution
     proposal=mvtComp(df=3); mixture=mclustMix();
     dprop <- proposal$d
     rprop <- proposal$r
@@ -36,7 +39,8 @@ amis <- function(prevalence_map, transmission_model, n_params, N, IO_file_id, de
         seeds <- c((max(seeds)+1): (max(seeds)+N[t]))
         ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, IO_file_id)
         param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
-        first_weight <- trachomAMIS::compute_prior_proposal_ratio(clustMix, t, T, N, beta = param[,1], constant = param[,2], dprop)
+        components <- trachomAMIS::update_mixture_components(clustMix, components, t)
+        first_weight <- trachomAMIS::compute_prior_proposal_ratio(components, t, T, N, beta = param[,1], constant = param[,2], dprop)
         all_sim_prevs<-param[1:sum(N[1:(t)]),3]
         WW <- trachomAMIS::compute_weight_matrix(prev, all_sim_prevs, delta, first_weight)
         ess <- trachomAMIS::calculate_ess(WW)
