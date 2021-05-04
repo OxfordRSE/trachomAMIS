@@ -6,7 +6,8 @@ amis <- function(prevalence_map, transmission_model, n_params, N, IO_file_id, de
     y <- tmp[[2]]  # constant
 
     seeds <- 1:N[1]
-    sim_prev <- trachomAMIS::run_transmission_model(seeds, x, IO_file_id)
+    id <- function(t) paste(IO_file_id, sprintf("_it%g", t), sep = "")
+    sim_prev <- trachomAMIS::run_transmission_model(seeds, x, id(1))
     param[1:N[1],1]<-x
     param[1:N[1],2]<-y
     param[1:N[1],3]<-sim_prev
@@ -37,7 +38,7 @@ amis <- function(prevalence_map, transmission_model, n_params, N, IO_file_id, de
         param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),1]<-sampled_params$beta
         param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),2]<-sampled_params$constant
         seeds <- c((max(seeds)+1): (max(seeds)+N[t]))
-        ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, IO_file_id)
+        ans <-trachomAMIS::run_transmission_model(seeds, sampled_params$beta, id(t))
         param[(sum(N[1:(t-1)])+1):sum(N[1:(t)]),3]<-ans
         components <- trachomAMIS::update_mixture_components(clustMix, components, t)
         first_weight <- trachomAMIS::compute_prior_proposal_ratio(components, t, T, N, beta = param[,1], constant = param[,2], dprop)
