@@ -15,7 +15,7 @@ amis <- function(prevalence_map, transmission_model, n_params, N, IO_file_id, de
     ess <- trachomAMIS::calculate_ess(WW)
     cat( min(ess),  "", max(ess), "\n")
 
-    GG<-list(NA,T)
+    GG<-c()
     Sigma <- list(NA, 10*T)
     Mean<-list(NA, 10*T)
     PP<-list(NA,T)
