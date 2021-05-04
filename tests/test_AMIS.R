@@ -59,4 +59,4 @@ prev <- sample_prevalence_map_at_IUs(IU_scen, n.map.sampl = 3000, scenario_id)
 ############## Run AMIS ############
 T <- 5
 N<-rep(100,T)
-param <- amis(prevalence_map = prev, transmission_model = NULL, n_params = 2, N = N, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
+param <- trachomAMIS::amis(prevalence_map = prev, transmission_model = NULL, n_params = 2, N = N, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
