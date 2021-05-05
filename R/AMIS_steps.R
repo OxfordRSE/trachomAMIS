@@ -17,7 +17,6 @@ write_model_input <- function(seeds, parameters, input_file) {
     write.csv(input_params, file=input_file, row.names=FALSE)
 }
 
-#' @export
 run_transmission_model <- function(seeds, parameters, id) {
     input_file <- paste("files/InputBet_", id, ".csv", sep = "")
     write_model_input(seeds, parameters, input_file)
@@ -27,7 +26,6 @@ run_transmission_model <- function(seeds, parameters, id) {
     return(100*res[,dim(res)[2]])
 }
 
-#' @export
 compute_weight_matrix <- function(prev_data, prev_sim, delta, first_weight) {
     n_IUs <- dim(prev_data)[1]
     weight_mat <- matrix(NA, nrow = n_IUs, ncol = length(prev_sim))
@@ -48,7 +46,6 @@ compute_weight_matrix <- function(prev_data, prev_sim, delta, first_weight) {
     return(weight_mat)
 }
 
-#' @export
 calculate_ess <- function(weight_mat) {
     ess_for_IU <- function(weights_for_IU) {
         if(sum(weights_for_IU) == 0) return(0)
@@ -62,14 +59,12 @@ calculate_ess <- function(weight_mat) {
     )
 }
 
-#' @export
 update_according_to_ess_value <- function(weight_matrix, ess, target_size) {
     rows_to_nullify <- which(ess >= target_size)
     weight_matrix[rows_to_nullify,] <- 0
     return(weight_matrix)
 }
 
-#' @export
 evaluate_mixture <- function(parameters, nsamples, weight_matrix, mixture) {
     sampled_idx <- sample(
         1:dim(parameters)[1],
@@ -81,7 +76,6 @@ evaluate_mixture <- function(parameters, nsamples, weight_matrix, mixture) {
     )
 }
 
-#' @export
 sample_new_parameters <- function(clustMix, n_samples, rprop) {
     x <- c(); y <- c()
     while(length(x)<n_samples){
@@ -111,8 +105,6 @@ update_mixture_components <- function(clustMix, components, t) {
     return(components)
 }
 
-
-#' @export
 compute_prior_proposal_ratio <- function(components, param, dprop) {
     PP <- components$PP
     Sigma <- components$Sigma
