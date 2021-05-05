@@ -15,15 +15,12 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
     first_weight = rep(1, nsamples)
   )
   ess <- calculate_ess(WW)
-  cat(min(ess), "", max(ess), "\n")
-
   components <- list(
     GG = c(0),
     Sigma = list(),
     Mean = list(),
     PP = list()
   )
-  # Set distribution for proposal: Student's t distribution
   prop <- mvtComp(df = 3)
   mixture <- mclustMix()
   set.seed(iscen)
@@ -40,7 +37,6 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
     first_weight <- compute_prior_proposal_ratio(components, param, prop$d)
     WW <- compute_weight_matrix(prev, simulated_prevalences, delta, first_weight)
     ess <- calculate_ess(WW)
-    cat(c("min(ESS)=", min(ess), ", max(ESS)=", max(ess), "\n"))
     if (min(ess) >= target_ess) break
   }
 
