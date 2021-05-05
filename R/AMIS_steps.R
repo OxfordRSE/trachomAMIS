@@ -91,7 +91,7 @@ sample_new_parameters <- function(clustMix, n_samples, rprop) {
         }
     }
     return(
-        list(beta=x, constant=y)
+        matrix(c(x,y), ncol = 2)
     )
 }
 
