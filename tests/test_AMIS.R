@@ -1,3 +1,5 @@
+devtools::load_all()
+
 get_scenario_id <- function(data, iscen) {
     Data = read.csv(data)
     scenar_group_pairs = unique(data.frame(Data$Scenario, Data$Group))
