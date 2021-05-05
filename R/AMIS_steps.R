@@ -101,12 +101,8 @@ update_mixture_components <- function(clustMix, components, t) {
     varHatt <- clustMix$SigmaHat
     G <- clustMix$G
 
-    components$GG[t-1] <- clustMix$G
-    G1<-0; G2<-G
-    if(t>2) {
-        G1<-sum(components$GG[1:(t-2)])
-        G2<-sum(components$GG[1:(t-1)])
-    }
+    components$GG[t] <- G
+    G1<-sum(components$GG[1:(t-1)])
     for(i in 1:G){
         components$Sigma[[i+G1]] <- varHatt[,,i]
         components$Mean[[i+G1]] <- muHatt[i,]
@@ -123,12 +119,7 @@ compute_prior_proposal_ratio <- function(components, t, T, N, beta, constant, dp
     Sigma <- components$Sigma
     Mean <- components$Mean
 
-    G1<-0; G2<-components$GG[t-1]
-    if(t>2) {
-        G1<-sum(components$GG[1:(t-2)])
-        G2<-sum(components$GG[1:(t-1)])
-    }
-
+    G2<-sum(components$GG)
     prop.val <- sapply(1:sum(N[1:t]),function(b)  sum(sapply(1:G2, function(g) PP[[g]] * dprop(c(beta[b], constant[b]),mu= Mean[[g]], Sig=Sigma[[g]]))) + dprop0(beta[b], constant[b]))   ## FIX to be just the proposal density ALSO scale by number of points
 
     first_weight <- sapply(1:sum(N[1:t]), function(b) dprop0(beta[b], constant[b])/prop.val[b])   # prior/proposal
