@@ -53,9 +53,6 @@ IU_scen <- which(Data$Scenario == scenario_id & Data$Group == group_id)
 
 prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g.csv", scenario_id, group_id) # make sure this is consistent with main.py
 
-
-source("AMIS_source.R")  # source code for AMIS
-
 prev <- sample_prevalence_map_at_IUs(IU_scen, n.map.sampl = 3000, scenario_id)
 
 ############## Run AMIS ############
