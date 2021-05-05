@@ -1,5 +1,5 @@
-dprop0<-function(a,b){
-    return(dunif(a, min=0.05, max=0.175)*dunif(b, min=0, max=1))
+dprop0<-function(x){
+    return(dunif(x[1], min=0.05, max=0.175)*dunif(x[2], min=0, max=1))
 }
 
 get_initial_parameters<-function(n){
@@ -90,7 +90,7 @@ sample_new_parameters <- function(clustMix, n_samples, rprop) {
             rprop(1,clustMix$muHat[compo,], clustMix$SigmaHat[,,compo])
         )
         new.param<-as.numeric(x1)
-        if(dprop0(new.param[1],new.param[2])>0){
+        if(dprop0(new.param)>0){
             x<-c(x, new.param[1])
             y<-c(y, new.param[2])
         }
@@ -113,15 +113,15 @@ update_mixture_components <- function(clustMix, components, t) {
 
 
 #' @export
-compute_prior_proposal_ratio <- function(components, beta, constant, dprop) {
+compute_prior_proposal_ratio <- function(components, param, dprop) {
     PP <- components$PP
     Sigma <- components$Sigma
     Mean <- components$Mean
 
     G2<-sum(components$GG)
-    prop.val <- sapply(1:length(beta),function(b)  sum(sapply(1:G2, function(g) PP[[g]] * dprop(c(beta[b], constant[b]),mu= Mean[[g]], Sig=Sigma[[g]]))) + dprop0(beta[b], constant[b]))   ## FIX to be just the proposal density ALSO scale by number of points
+    prop.val <- sapply(1:nrow(param),function(b)  sum(sapply(1:G2, function(g) PP[[g]] * dprop(param[b,],mu= Mean[[g]], Sig=Sigma[[g]]))) + dprop0(param[b,]))   ## FIX to be just the proposal density ALSO scale by number of points
 
-    first_weight <- sapply(1:length(beta), function(b) dprop0(beta[b], constant[b])/prop.val[b])   # prior/proposal
+    first_weight <- sapply(1:nrow(param), function(b) dprop0(param[b,])/prop.val[b])   # prior/proposal
 
     return(first_weight)
 }
