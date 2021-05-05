@@ -113,15 +113,15 @@ update_mixture_components <- function(clustMix, components, t) {
 
 
 #' @export
-compute_prior_proposal_ratio <- function(components, t, T, N, beta, constant, dprop) {
+compute_prior_proposal_ratio <- function(components, beta, constant, dprop) {
     PP <- components$PP
     Sigma <- components$Sigma
     Mean <- components$Mean
 
     G2<-sum(components$GG)
-    prop.val <- sapply(1:sum(N[1:t]),function(b)  sum(sapply(1:G2, function(g) PP[[g]] * dprop(c(beta[b], constant[b]),mu= Mean[[g]], Sig=Sigma[[g]]))) + dprop0(beta[b], constant[b]))   ## FIX to be just the proposal density ALSO scale by number of points
+    prop.val <- sapply(1:length(beta),function(b)  sum(sapply(1:G2, function(g) PP[[g]] * dprop(c(beta[b], constant[b]),mu= Mean[[g]], Sig=Sigma[[g]]))) + dprop0(beta[b], constant[b]))   ## FIX to be just the proposal density ALSO scale by number of points
 
-    first_weight <- sapply(1:sum(N[1:t]), function(b) dprop0(beta[b], constant[b])/prop.val[b])   # prior/proposal
+    first_weight <- sapply(1:length(beta), function(b) dprop0(beta[b], constant[b])/prop.val[b])   # prior/proposal
 
     return(first_weight)
 }

@@ -23,7 +23,7 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples, IO_file
         simulated_prevalences <- append(simulated_prevalences,
                                         run_transmission_model(seeds(t) , param[,1], id(t)))
         components <- trachomAMIS::update_mixture_components(clustMix, components, t)
-        first_weight <- trachomAMIS::compute_prior_proposal_ratio(components, t, T, rep(nsamples, T), beta = param[,1], constant = param[,2], prop$d)
+        first_weight <- trachomAMIS::compute_prior_proposal_ratio(components, beta = param[,1], constant = param[,2], prop$d)
         WW <- trachomAMIS::compute_weight_matrix(prev, simulated_prevalences, delta, first_weight)
         ess <- trachomAMIS::calculate_ess(WW)
         cat( c("min(ESS)=", min(ess),  ", max(ESS)=", max(ess), "\n"))
