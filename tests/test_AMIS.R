@@ -38,6 +38,8 @@ sample_prevalence_map_at_IUs <- function(IU_indices, n.map.sampl, scenario_id) {
 
 iscen = 1
 
+library(reticulate)
+
 scenario_id <- get_scenario_id("./data/FinalDataPrev.csv", iscen)
 group_id <- get_group_id("./data/FinalDataPrev.csv", iscen)
 
@@ -51,10 +53,12 @@ prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g.csv", scenario_id
 
 prev <- sample_prevalence_map_at_IUs(IU_scen, n.map.sampl = 3000, scenario_id)
 
+model <- import("trachoma")
+
 ############## Run AMIS ############
 T <- 5
 N<-rep(100,T)
-param <- trachomAMIS::amis(prevalence_map = prev, transmission_model = NULL, n_params = 2, nsamples = 100, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
+param <- trachomAMIS::amis(prevalence_map = prev, transmission_model = model$Trachoma_Simulation, n_params = 2, nsamples = 100, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
 
 expected_param <- matrix(scan("./tests/test_data/param_iteration_5.csv"),
                          nrow = 500,

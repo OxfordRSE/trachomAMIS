@@ -40,11 +40,14 @@ write_model_input <- function(seeds, beta, input_file) {
   write.csv(input_params, file = input_file, row.names = FALSE)
 }
 
-run_transmission_model <- function(seeds, parameters, id) {
+run_transmission_model <- function(model_func, seeds, parameters, id) {
   input_file <- paste("files/InputBet_", id, ".csv", sep = "")
   write_model_input(seeds, parameters, input_file)
-  ## Run model
   output_file <- paste("output/OutputPrev_", id, ".csv", sep = "")
+  inputMDA <- paste("files/InputMDA_", id, ".csv", sep = "")
+  infect_output <- paste("output/InfectFilePath_", id, ".csv", sep = "")
+  model_func(input_file, inputMDA, output_file, infect_output,
+             SaveOutput = F, OutSimFilePath = NULL, InSimFilePath = NULL)
   res <- read.csv(output_file)
   return(100 * res[, dim(res)[2]])
 }
