@@ -1,3 +1,16 @@
+dprop0<-function(a,b){
+    return(dunif(a, min=0.05, max=0.175)*dunif(b, min=0, max=1))
+}
+
+get_initial_parameters<-function(n){
+    init_beta_samples <- runif(n, min=0.05, max=0.175)
+    init_constant_samples <- runif(n, min=0, max=1)
+    return(
+        matrix(c(init_beta_samples, init_constant_samples),
+               ncol = 2)
+        )
+}
+
 write_model_input <- function(seeds, parameters, input_file) {
     input_params <- cbind(seeds, parameters)
     colnames(input_params) = c("randomgen", "bet")
@@ -47,14 +60,6 @@ calculate_ess <- function(weight_mat) {
     return(
         apply(weight_mat, 1, ess_for_IU)
     )
-}
-
-dprop0<-function(a,b){
-    return(dunif(a, min=0.05, max=0.175)*dunif(b, min=0, max=1))
-}
-
-rprop0<-function(n){
-  return(list(runif(n, min=0.05, max=0.175), runif(n, min=0, max=1)))
 }
 
 #' @export

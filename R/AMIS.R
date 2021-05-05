@@ -1,17 +1,10 @@
 #' @export
 amis <- function(prevalence_map, transmission_model, n_params, N, IO_file_id, delta = 5, T = 100, target_ess = 250) {
     param<-matrix(NA, ncol=n_params+1+1, nrow=sum(N))  # Matrix for parameter values, + prevalence and weights
-    tmp<-rprop0(N[1])    #N[t] random draws of parameters from prior
-    x <- tmp[[1]]  # bet
-    y <- tmp[[2]]  # constant
-
+    param[1:N[1],1:2] <- get_initial_parameters(N[1])
     id <- function(t) paste(IO_file_id, sprintf("_it%g", t), sep = "")
-    sim_prev <- trachomAMIS::run_transmission_model(seeds = 1:N[1], x, id(1))
-    param[1:N[1],1]<-x
-    param[1:N[1],2]<-y
-    param[1:N[1],3]<-sim_prev
-
-    WW <- trachomAMIS::compute_weight_matrix(prev, sim_prev, delta, first_weight = rep(1, N[1]))
+    param[1:N[1],3] <- trachomAMIS::run_transmission_model(seeds = 1:N[1], parameters = param[1:N[1],1], id(1))
+    WW <- trachomAMIS::compute_weight_matrix(prev, param[1:N[1],3], delta, first_weight = rep(1, N[1]))
     ess <- trachomAMIS::calculate_ess(WW)
     cat( min(ess),  "", max(ess), "\n")
 
