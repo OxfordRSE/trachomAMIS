@@ -96,17 +96,12 @@ sample_new_parameters <- function(clustMix, n_samples, rprop) {
 }
 
 update_mixture_components <- function(clustMix, components, t) {
-    ppt <- clustMix$alpha
-    muHatt <- clustMix$muHat
-    varHatt <- clustMix$SigmaHat
-    G <- clustMix$G
-
-    components$GG[t] <- G
+    components$GG[t] <- clustMix$G
     G1<-sum(components$GG[1:(t-1)])
-    for(i in 1:G){
-        components$Sigma[[i+G1]] <- varHatt[,,i]
-        components$Mean[[i+G1]] <- muHatt[i,]
-        components$PP[[i+G1]] <- ppt[i]   ### scale by number of points
+    for(i in 1:clustMix$G){
+        components$Sigma[[i+G1]] <- clustMix$SigmaHat[,,i]
+        components$Mean[[i+G1]] <- clustMix$muHat[i,]
+        components$PP[[i+G1]] <- clustMix$alpha[i]   ### scale by number of points
     }
     return(components)
 }
@@ -114,7 +109,6 @@ update_mixture_components <- function(clustMix, components, t) {
 
 #' @export
 compute_prior_proposal_ratio <- function(components, t, T, N, beta, constant, dprop) {
-    GG <- components$GG
     PP <- components$PP
     Sigma <- components$Sigma
     Mean <- components$Mean
