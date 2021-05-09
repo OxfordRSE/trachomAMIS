@@ -91,8 +91,8 @@ qa_plots <- function(paramw, grp_map_data, plot_folder, scenid, grpid){
     pdf(file=paste0(plot_folder, "/ecdf.", scenid, IUlist[i], ".pdf"))
     par(mfrow=c(1,1))
     data_prev <- as.numeric(grp_map_data[i, 2:(n.data+1)])
-    sample_prev <- paramw[,4]
-    weights <- paramw[,5+i]
+    sample_prev <- paramw[,2]
+    weights <- paramw[,2+i]
     ecdf_dist <- TestsCdfs(sample_prev, weights, data_prev, rep(1, n.data))
     plot_two_ecdf(sample_prev, data_prev, weights)
     text(.2,.9, paste("sqrd diff=", round(ecdf_dist[4],4)))
