@@ -81,10 +81,9 @@ plot_four_histograms <- function(full_sample_prev, data_prev, weights, subsample
   plot_histogram(data_prev, rep(1/length(data_prev), length(data_prev)), title="GeoMaps")
 }
 
-qa_plots <- function(paramw, grp_map_data, plot_folder, scenid, grpid){
+qa_plots <- function(paramw, grp_map_data, plot_folder, IUlist, scenid, grpid){
   n.ius <- dim(grp_map_data)[1]
   n.data <- dim(grp_map_data)[2] - 1
-  IUlist <- map_data_for_grp[,1]
   ecdf_sqrd_distance <- c()
   ecdf_max_distance <- c()
   for(i in 1:n.ius){

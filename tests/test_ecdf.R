@@ -31,4 +31,4 @@ N<-rep(100,T)
 param_and_weights <- trachomAMIS::amis(prevalence_map = prev, transmission_model = NULL, n_params = 2, nsamples = 100, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
 
 source("tests/qa_ecdf_funcs.R")
-qa_plots(param_and_weights, prev, "tests/plots", scenario_id, group_id)
+qa_plots(param_and_weights, prev, "tests/plots", Data$IUCodes[IU_scen], scenario_id, group_id)
