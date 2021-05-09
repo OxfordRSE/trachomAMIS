@@ -61,26 +61,6 @@ TestsCdfs <- function(s1,w1,s2,w2) {
   return(c(A.pos,abs(A.neg),max(abs(dheight), na.rm=T), Distance))
 }
 
-plot_histogram <- function(sample, weights, title){
-  wtd.hist(sample,  breaks=breaks, weight=weights, main=title)
-  qtl <- wtd.quantile(sample, weights=weights, normwt=TRUE, prob=c(0.025, 0.5, 0.975))
-  abline(v=qtl[1], lty=2, col="red", lwd=2)
-  abline(v=qtl[2], lty=2, col="blue", lwd=2)
-  abline(v=qtl[3], lty=2, lwd=2)
-}
-
-plot_four_histograms <- function(full_sample_prev, data_prev, weights, subsample_prev, subweights){
-  par(mfrow=c(2,2))
-  # unweighted full
-  plot_histogram(full_sample_prev, rep(1/length(full_sample_prev), length(full_sample_prev)), title="All Prevalences")
-  # weighted full
-  plot_histogram(full_sample_prev, weights, title="Full Weighted Prevalences")
-  # weighted subsample
-  plot_histogram(subsample_prev, subweights, title="Subsample Weighted Prevalences")
-  # data
-  plot_histogram(data_prev, rep(1/length(data_prev), length(data_prev)), title="GeoMaps")
-}
-
 qa_plots <- function(paramw, grp_map_data, plot_folder, IUlist, scenid, grpid){
   n.ius <- dim(grp_map_data)[1]
   n.data <- dim(grp_map_data)[2] - 1
