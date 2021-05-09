@@ -40,5 +40,10 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
     if (min(ess) >= target_ess) break
   }
 
-  return(cbind(param, simulated_prevalences, deparse.level = 0))
+  ## Attach simulated prevalence values to param array
+  param <- cbind(param, simulated_prevalences, deparse.level = 0)
+  ## Attach weight matrix
+  paramWW <- cbind(param, t(WW))
+  ## Return matrix without second column for "constant"
+  return(paramWW[,-2])
 }
