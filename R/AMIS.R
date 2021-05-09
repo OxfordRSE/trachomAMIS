@@ -7,9 +7,9 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
     seeds = 1:nsamples,
     parameters = param[, 1],
     id(1)
-  )
+    )
   WW <- compute_weight_matrix(
-    prev,
+    prevalence_map,
     simulated_prevalences,
     delta,
     first_weight = rep(1, nsamples)
