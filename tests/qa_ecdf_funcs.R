@@ -9,19 +9,6 @@ Ecdf <- function(Samples, Weights=NULL) # calculate empirical cdf
   return(Matrix)
 }
 
-plot_two_ecdf <- function(sample_prev, data_prev, weights){
-  #plots both the data and sample ecdf
-  par(mfrow=c(1,1))
-  weights = weights/sum(weights)
-  plot(NA, xlim=c(0,1), ylim=c(0,1), xlab="x", ylab = "Empirical cumulative distribution")
-  sample_ecdf_matrix <- Ecdf(sample_prev, Weights=weights)
-  data_ecdf_matrix <- Ecdf(data_prev)
-  lines(stepfun(sample_ecdf_matrix$Samples, c(0,sample_ecdf_matrix$Height)), col=4) # red
-  lines(stepfun(data_ecdf_matrix$Samples, c(0,data_ecdf_matrix$Height)), col=2) # blue
-  abline(h=0, lty="dashed", col="gray")
-  abline(h=1, lty="dashed", col="gray")
-}
-
 add.points <- function(M,extra) {
   L<-length(extra)
   O<-data.frame(Samples=extra,Weights=rep(0,L),Heights=rep(NA,L))
@@ -67,23 +54,14 @@ qa_plots <- function(paramw, grp_map_data, plot_folder, IUlist, scenid, grpid){
   ecdf_sqrd_distance <- c()
   ecdf_max_distance <- c()
   for(i in 1:n.ius){
-    pdf(file=paste0(plot_folder, "/ecdf.", scenid, IUlist[i], ".pdf"))
-    par(mfrow=c(1,1))
     data_prev <- as.numeric(grp_map_data[i, 2:(n.data+1)])
     sample_prev <- paramw[,2]
     weights <- paramw[,2+i]
     ecdf_dist <- TestsCdfs(sample_prev, weights, data_prev, rep(1, n.data))
-    plot_two_ecdf(sample_prev, data_prev, weights)
-    text(.2,.9, paste("sqrd diff=", round(ecdf_dist[4],4)))
-    text(.2,.8, paste("max=", round(ecdf_dist[3],4)))
-    dev.off()
     ecdf_max_distance <- c(ecdf_max_distance, ecdf_dist[3])
     ecdf_sqrd_distance <- c(ecdf_sqrd_distance, ecdf_dist[4])
   }
-  pdf(file=paste0(plot_folder, "/ecdf.dist.", scenid, "_", grpid, ".pdf"))
-  par(mfrow=c(1,1))
-  plot(ecdf_max_distance, ecdf_sqrd_distance, xlab="max distance", ylab="squared difference")
-  dev.off()
-  ecdf_df <- data.frame(IUlist, ecdf_max_distance, ecdf_sqrd_distance)
-  return(ecdf_df)
+  return(
+      data.frame(IUlist, ecdf_max_distance, ecdf_sqrd_distance)
+  )
 }
