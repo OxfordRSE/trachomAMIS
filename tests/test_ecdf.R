@@ -14,10 +14,6 @@ sample_prevalence_map_at_IUs <- function(IU_indices, n.map.sampl, scenario_id) {
     )
 }
 
-library(tmvtnorm)
-library(mnormt)
-library(mclust)
-
 iscen <- 1
 scenario_id <- 36
 group_id <- 2

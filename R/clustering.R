@@ -1,15 +1,19 @@
 mvtComp<-function(df=3){
 	list("d"=function(xx,mu=rep(0,ncol(xx)),Sig=diag(1,ncol(xx),ncol(xx)),log=FALSE){
-		dmt(xx,mean=mu,S=Sig,df=df,log=log)
+		mnormt::dmt(xx,mean=mu,S=Sig,df=df,log=log)
 		},"r"=function(n=1,mu=0,Sig=1){
-			rmt(n,mean=mu,S=Sig,df=df)
+			mnormt::rmt(n,mean=mu,S=Sig,df=df)
 			})
 }
 
 mclustMix<-function(G=1:10){
-	
+    ## Attaching mclust because issue with using
+    ## mclust::mvn(data, modelName="VVV",). it should point to
+    ## mclust::mvnXXX but this function cannot be found. It might because
+    ## mvnXXX is called from eval(expt, parent.frame()) in mvn.
+    ## See https://github.com/cran/mclust/blob/598224fc49cf8578ade7190ed73a71a51304267d/R/mclust.R#L4532
+	require(mclust)
 	if (any(as.numeric(G)<=0)) stop("G must be positive")
-	if(!require("mclust")) stop("Package mclust is not installed...")
 	
 	function(xx){
 		
@@ -29,7 +33,7 @@ fitMclust<-function(xx,modelName="VVV",G= G){
 	
 	options(warn=-1)
 	
-	control <- emControl(eps=sqrt(.Machine$double.eps))
+	control <- mclust::emControl(eps=sqrt(.Machine$double.eps))
 	
 	n <- nrow(xx)
 	p <- ncol(xx)
@@ -37,7 +41,7 @@ fitMclust<-function(xx,modelName="VVV",G= G){
 	clustering <-Gout <- BIC <- NA
 	
 	if (G[1] == 1) {
-		clustering <- mvn(modelName = modelName, data = xx)
+		clustering <- mclust::mvn(modelName = modelName, data = xx)
 		BIC <- bic(modelName=modelName,loglik=clustering$loglik,n=n,d=p,G=1)
 		Gout <- 1
 		G <- G[-1]
