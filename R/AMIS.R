@@ -24,7 +24,7 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
   prop <- mvtComp(df = 3)
   mixture <- mclustMix()
   set.seed(iscen)
-  seeds <- function(t) c((t - 1) * nsamples + 1:t * nsamples)
+  seeds <- function(t) ((t - 1) * nsamples + 1):(t * nsamples)
   for (t in 2:T) {
     WW <- update_according_to_ess_value(WW, ess, target_ess)
     clustMix <- evaluate_mixture(param, nsamples, WW, mixture)
