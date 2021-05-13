@@ -28,12 +28,13 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
   for (t in 2:T) {
     WW <- update_according_to_ess_value(WW, ess, target_ess)
     clustMix <- evaluate_mixture(param, nsamples, WW, mixture)
-    param <- rbind(param, sample_new_parameters(clustMix, nsamples, prop$r))
+    new_params <- sample_new_parameters(clustMix, nsamples, prop$r)
     simulated_prevalences <- append(
       simulated_prevalences,
-      run_transmission_model(seeds(t), param[, 1], id(t))
+      run_transmission_model(transmission_model, seeds(t), new_params[, 1], IO_file_id)
     )
     components <- update_mixture_components(clustMix, components, t)
+    param <- rbind(param, new_params)
     first_weight <- compute_prior_proposal_ratio(components, param, prop$d)
     WW <- compute_weight_matrix(prev, simulated_prevalences, delta, first_weight)
     ess <- calculate_ess(WW)
