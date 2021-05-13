@@ -2,12 +2,11 @@
 amis <- function(prevalence_map, transmission_model, n_params, nsamples,
                  IO_file_id, delta = 5, T = 100, target_ess = 250) {
   param <- get_initial_parameters(nsamples)
-  id <- function(t) paste(IO_file_id, sprintf("_it%g", t), sep = "")
   simulated_prevalences <- run_transmission_model(
     transmission_model,  
     seeds = 1:nsamples,
     parameters = param[, 1],
-    id(1)
+    IO_file_id
     )
   WW <- compute_weight_matrix(
     prevalence_map,
