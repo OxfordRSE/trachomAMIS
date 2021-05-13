@@ -43,8 +43,9 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
 
   ## Attach simulated prevalence values to param array
   param <- cbind(param, simulated_prevalences, deparse.level = 0)
-  ## Attach weight matrix
-  paramWW <- cbind(param, t(WW))
+  ## Attach seed values and weight matrix
+  allseeds <- 1:(T * nsamples)
+  paramWW <- cbind(allseeds, param, t(WW))
   ## Return matrix without second column for "constant"
-  return(paramWW[,-2])
+  return(paramWW[,-3])
 }
