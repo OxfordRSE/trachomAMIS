@@ -53,7 +53,8 @@ prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g.csv", scenario_id
 
 prev <- sample_prevalence_map_at_IUs(IU_scen, n.map.sampl = 3000, scenario_id)
 
-model <- import("trachoma")
+reticulate::use_virtualenv("./.venv", required=TRUE)
+model <- reticulate::import("trachoma")
 
 ############## Run AMIS ############
 T <- 5
