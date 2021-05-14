@@ -2,7 +2,7 @@ dprop0 <- function(x) {
   return(dunif(x[1], min = 0.05, max = 0.175) * dunif(x[2], min = 0, max = 1))
 }
 
-#' Sample initial parameters from proposal distribution
+#' Sample initial parameters from prior
 #'
 #' Sample N initial values for two parameters, uniformly distributed
 #' between MIN and MAX.
