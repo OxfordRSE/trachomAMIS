@@ -36,7 +36,7 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
     components <- update_mixture_components(clustMix, components, t)
     param <- rbind(param, new_params)
     first_weight <- compute_prior_proposal_ratio(components, param, prop$d)
-    WW <- compute_weight_matrix(prev, simulated_prevalences, delta, first_weight)
+    WW <- compute_weight_matrix(prevalence_map, simulated_prevalences, delta, first_weight)
     ess <- calculate_ess(WW)
     if (min(ess) >= target_ess) break
   }
