@@ -41,11 +41,13 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
     if (min(ess) >= target_ess) break
   }
 
-  ## Attach simulated prevalence values to param array
-  param <- cbind(param, simulated_prevalences, deparse.level = 0)
-  ## Attach seed values and weight matrix
   allseeds <- 1:(T * nsamples)
-  paramWW <- cbind(allseeds, param, t(WW))
-  ## Return matrix without second column for "constant"
-  return(paramWW[,-3])
+  ret <- data.frame(allseeds, param[,-2], simulated_prevalences, t(WW))
+  colnames(ret) <- c(
+      "seeds",
+      "beta",
+      "sim_prev",
+      sapply(1:dim(WW)[1], function(idx) sprintf("iu%g", idx))
+      )
+  return(ret)
 }

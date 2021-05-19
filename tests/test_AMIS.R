@@ -61,8 +61,5 @@ T <- 5
 N<-rep(100,T)
 param <- trachomAMIS::amis(prevalence_map = prev, transmission_model = model$Trachoma_Simulation, n_params = 2, nsamples = 100, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
 
-expected_param <- matrix(scan("./tests/test_data/param_iteration_5.csv"),
-                         nrow = 500,
-                         ncol = 3,
-                         byrow = TRUE)
+expected_param <- read.csv("./tests/test_data/param_iteration_5.csv")
 testthat::expect_equal(param, expected_param)
