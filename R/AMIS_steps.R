@@ -47,6 +47,7 @@ run_transmission_model <- function(model_func, seeds, parameters, id) {
   inputMDA <- paste("files/InputMDA_", id, ".csv", sep = "")
   infect_output <- paste("output/InfectFilePath_", id, ".csv", sep = "")
   model_func(input_file, inputMDA, output_file, infect_output,
+  model_func(input_file, mda_file, output_file, infect_output,
              SaveOutput = F, OutSimFilePath = NULL, InSimFilePath = NULL)
   res <- read.csv(output_file)
   return(100 * res[, dim(res)[2]])

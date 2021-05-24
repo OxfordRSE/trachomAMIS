@@ -1,12 +1,13 @@
 #' @export
-amis <- function(prevalence_map, transmission_model, n_params, nsamples,
-                 IO_file_id, delta = 5, T = 100, target_ess = 250) {
+amis <- function(prevalence_map, transmission_model, mda_file, n_params, nsamples,
+                 IO_file_id, delta = 5, T = 100, target_ess = 250, mda_file) {
   param <- get_initial_parameters(nsamples)
   simulated_prevalences <- run_transmission_model(
     transmission_model,  
     seeds = 1:nsamples,
     parameters = param[, 1],
-    IO_file_id
+    IO_file_id,
+    mda_file
     )
   WW <- compute_weight_matrix(
     prevalence_map,
@@ -31,7 +32,7 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
     new_params <- sample_new_parameters(clustMix, nsamples, prop$r)
     simulated_prevalences <- append(
       simulated_prevalences,
-      run_transmission_model(transmission_model, seeds(t), new_params[, 1], IO_file_id)
+      run_transmission_model(transmission_model, seeds(t), new_params[, 1], IO_file_id, mda_file)
     )
     components <- update_mixture_components(clustMix, components, t)
     param <- rbind(param, new_params)
