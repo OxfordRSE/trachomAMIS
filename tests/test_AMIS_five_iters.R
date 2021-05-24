@@ -1,7 +1,7 @@
 library(testthat)
 devtools::load_all()
 
-source("./AMIS_five_iterations.R")
+source("./tests/AMIS_five_iterations.R")
 
 ### Test input file generated for the transmission model
 ### for first two iterations of AMIS
