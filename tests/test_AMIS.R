@@ -59,7 +59,7 @@ model <- reticulate::import("trachoma")
 ############## Run AMIS ############
 T <- 5
 N<-rep(100,T)
-param <- trachomAMIS::amis(prevalence_map = prev, transmission_model = model$Trachoma_Simulation, n_params = 2, nsamples = 100, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
+param <- trachomAMIS::amis(prevalence_map = prev, transmission_model = model$Trachoma_Simulation, n_params = 2, nsamples = 100, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250, mda_file = "files/InputMDA_scen36_group2.csv")
 
 expected_param <- read.csv("./tests/test_data/param_iteration_5.csv")
 testthat::expect_equal(param, expected_param)
