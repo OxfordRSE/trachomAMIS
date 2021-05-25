@@ -1,5 +1,5 @@
 #' @export
-amis <- function(prevalence_map, transmission_model, mda_file, n_params, nsamples,
+amis <- function(prevalence_map, transmission_model, n_params, nsamples,
                  IO_file_id, delta = 5, T = 100, target_ess = 250, mda_file) {
   param <- get_initial_parameters(nsamples)
   simulated_prevalences <- run_transmission_model(

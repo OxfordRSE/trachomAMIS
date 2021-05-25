@@ -43,12 +43,12 @@ write_model_input <- function(seeds, beta, input_file) {
 run_transmission_model <- function(model_func, seeds, parameters, id, mda_file) {
   tmp_dir <- "model_io"
   dir.create(tmp_dir)
-  on.exit(unlink(model_io, recursive = FALSE))
+  on.exit(unlink(tmp_dir, recursive = FALSE))
 
-  input_file <- file.path(model_io, sprintf("InputBet_%g.csv", id))
+  input_file <- file.path(tmp_dir, sprintf("InputBet_%s.csv", id))
   write_model_input(seeds, parameters, input_file)
-  output_file <- file.path(model_io, sprintf("OutputPrev_%g.csv", id))
-  infect_output <- file.path(model_io, sprintf("InfectOutput_%g.csv", id))
+  output_file <- file.path(tmp_dir, sprintf("OutputPrev_%s.csv", id))
+  infect_output <- file.path(tmp_dir, sprintf("InfectOutput_%s.csv", id))
 
   model_func(input_file, mda_file, output_file, infect_output,
              SaveOutput = F, OutSimFilePath = NULL, InSimFilePath = NULL)
