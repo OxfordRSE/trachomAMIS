@@ -43,7 +43,7 @@ write_model_input <- function(seeds, beta, input_file) {
 run_transmission_model <- function(model_func, seeds, parameters, id, mda_file) {
   tmp_dir <- "model_io"
   dir.create(tmp_dir)
-  on.exit(unlink(tmp_dir, recursive = FALSE))
+  on.exit(unlink(tmp_dir, recursive = TRUE))
 
   input_file <- file.path(tmp_dir, sprintf("InputBet_%s.csv", id))
   write_model_input(seeds, parameters, input_file)
