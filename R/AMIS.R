@@ -1,6 +1,7 @@
 #' @export
 amis <- function(prevalence_map, transmission_model, n_params, nsamples,
-                 IO_file_id, delta = 5, T = 100, target_ess = 250, mda_file) {
+                 IO_file_id, delta = 5, T = 100, target_ess = 250,
+                 mda_file, jobid) {
   param <- get_initial_parameters(nsamples)
   simulated_prevalences <- run_transmission_model(
     transmission_model,  
@@ -24,7 +25,7 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
   )
   prop <- mvtComp(df = 3)
   mixture <- mclustMix()
-  set.seed(iscen)
+  set.seed(jobid)
   seeds <- function(t) ((t - 1) * nsamples + 1):(t * nsamples)
   for (t in 2:T) {
     WW <- update_according_to_ess_value(WW, ess, target_ess)
