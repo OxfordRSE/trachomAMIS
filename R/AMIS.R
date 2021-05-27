@@ -1,7 +1,11 @@
 #' @export
 amis <- function(prevalence_map, transmission_model, n_params, nsamples,
                  IO_file_id, delta = 5, T = 100, target_ess = 250,
-                 mda_file, jobid) {
+                 mda_file, jobid, seed = NULL) {
+
+  if(!is.null(seed)) set.seed(seed)
+    
+  print("AMIS iteration 1")
   param <- get_initial_parameters(nsamples)
   simulated_prevalences <- run_transmission_model(
     transmission_model,  
@@ -25,9 +29,10 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
   )
   prop <- mvtComp(df = 3)
   mixture <- mclustMix()
-  set.seed(jobid)
   seeds <- function(t) ((t - 1) * nsamples + 1):(t * nsamples)
+  niter <- 1
   for (t in 2:T) {
+    print(sprintf("AMIS iteration %g", t))
     WW <- update_according_to_ess_value(WW, ess, target_ess)
     clustMix <- evaluate_mixture(param, nsamples, WW, mixture)
     new_params <- sample_new_parameters(clustMix, nsamples, prop$r)
@@ -40,10 +45,11 @@ amis <- function(prevalence_map, transmission_model, n_params, nsamples,
     first_weight <- compute_prior_proposal_ratio(components, param, prop$d)
     WW <- compute_weight_matrix(prevalence_map, simulated_prevalences, delta, first_weight)
     ess <- calculate_ess(WW)
+    niter <- niter + 1
     if (min(ess) >= target_ess) break
   }
 
-  allseeds <- 1:(T * nsamples)
+  allseeds <- 1:(niter * nsamples)
   ret <- data.frame(allseeds, param[,-2], simulated_prevalences, t(WW))
   colnames(ret) <- c(
       "seeds",

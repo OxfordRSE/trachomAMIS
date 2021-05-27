@@ -1,4 +1,4 @@
-devtools::load_all()
+odevtools::load_all()
 
 get_scenario_id <- function(data, iscen) {
     Data = read.csv(data)
@@ -22,34 +22,16 @@ get_group_id <- function(data, iscen) {
     return(scenar_group_pairs$Data.Group[iscen])
 }
 
-sample_prevalence_map_at_IUs <- function(IU_indices, n.map.sampl, scenario_id) {
-    prev = matrix(NA, ncol = n.map.sampl, nrow = length(IU_indices))
-    sample_map <- function(IU_index) {
-        set.seed(scenario_id) # For comparison with test data with `set.seed(Scen[iscen])`
-        rnorm(n.map.sampl, Data$Logit[IU_index], sd = Data$Sds[IU_index])
-    }
-    L <- lapply(IU_indices, sample_map)
-    prev <- sapply(L, function(x) exp(x)/(1+exp(x)))
-
-    return(
-        t(prev*100)
-    )
-}
-
 library(reticulate)
 
-scenario_id <- get_scenario_id("./data/FinalDataPrev.csv", iscen)
-group_id <- get_group_id("./data/FinalDataPrev.csv", iscen)
+iscen <- 1
+scenario_id <- get_scenario_id("./tests/test_data/FinalDataPrev.csv", iscen)
+group_id <- get_group_id("./tests/test_data/FinalDataPrev.csv", iscen)
 
-prefix <- sprintf("scen%g_group%g", scenario_id, group_id)
-folder <- "output/"  # which folder to save final files to
-
-Data = read.csv("./data/FinalDataPrev.csv")
-IU_scen <- which(Data$Scenario == scenario_id & Data$Group == group_id)
-
-prevalence_output <- sprintf("output/OutputPrev_scen%g_group%g.csv", scenario_id, group_id) # make sure this is consistent with main.py
-
-prev <- sample_prevalence_map_at_IUs(IU_scen, n.map.sampl = 3000, scenario_id)
+prev <- matrix(
+    scan(file = "tests/test_data/prevalence_map.csv"),
+    nrow = 3, byrow = T
+)
 
 reticulate::use_virtualenv("./.venv", required=TRUE)
 model <- reticulate::import("trachoma")
