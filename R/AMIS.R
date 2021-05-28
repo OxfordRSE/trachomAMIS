@@ -1,16 +1,16 @@
 #' @export
-amis <- function(prevalence_map, transmission_model, nsamples,
-                 delta = 5, T = 100, target_ess = 250, seed = NULL) {
+amis <- function(prevalence_map, transmission_model, amis_params, seed = NULL) {
 
   if(!is.null(seed)) set.seed(seed)
-    
+
+  nsamples <- amis_params[["nsamples"]]
   print("AMIS iteration 1")
   param <- get_initial_parameters(nsamples)
   simulated_prevalences <- transmission_model(seeds = 1:nsamples, param[,1])
   WW <- compute_weight_matrix(
     prevalence_map,
     simulated_prevalences,
-    delta,
+    amis_params[["delta"]],
     first_weight = rep(1, nsamples)
   )
   ess <- calculate_ess(WW)
@@ -24,9 +24,9 @@ amis <- function(prevalence_map, transmission_model, nsamples,
   mixture <- mclustMix()
   seeds <- function(t) ((t - 1) * nsamples + 1):(t * nsamples)
   niter <- 1
-  for (t in 2:T) {
+  for (t in 2:amis_params[["T"]]) {
     print(sprintf("AMIS iteration %g", t))
-    WW <- update_according_to_ess_value(WW, ess, target_ess)
+    WW <- update_according_to_ess_value(WW, ess, amis_params[["target_ess"]])
     clustMix <- evaluate_mixture(param, nsamples, WW, mixture)
     new_params <- sample_new_parameters(clustMix, nsamples, prop$r)
     simulated_prevalences <- append(
@@ -36,10 +36,10 @@ amis <- function(prevalence_map, transmission_model, nsamples,
     components <- update_mixture_components(clustMix, components, t)
     param <- rbind(param, new_params)
     first_weight <- compute_prior_proposal_ratio(components, param, prop$d)
-    WW <- compute_weight_matrix(prevalence_map, simulated_prevalences, delta, first_weight)
+    WW <- compute_weight_matrix(prevalence_map, simulated_prevalences, amis_params[["delta"]], first_weight)
     ess <- calculate_ess(WW)
     niter <- niter + 1
-    if (min(ess) >= target_ess) break
+    if (min(ess) >= amis_params[["target_ess"]]) break
   }
 
   allseeds <- 1:(niter * nsamples)
