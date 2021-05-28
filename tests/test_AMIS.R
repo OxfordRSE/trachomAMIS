@@ -1,32 +1,7 @@
-odevtools::load_all()
-
-get_scenario_id <- function(data, iscen) {
-    Data = read.csv(data)
-    scenar_group_pairs = unique(data.frame(Data$Scenario, Data$Group))
-
-    ### TODO: Remove high prevalence group because...
-    high_prevalence_group <- which(scenar_group_pairs$Data.Group == 7)
-    scenar_group_pairs = scenar_group_pairs[-high_prevalence_group, ]
-
-    return(scenar_group_pairs$Data.Scenario[iscen])
-}
-
-get_group_id <- function(data, iscen) {
-    Data = read.csv(data)
-    scenar_group_pairs = unique(data.frame(Data$Scenario, Data$Group))
-
-    ### TODO: Remove high prevalence group because...
-    high_prevalence_group <- which(scenar_group_pairs$Data.Group == 7)
-    scenar_group_pairs = scenar_group_pairs[-high_prevalence_group, ]
-
-    return(scenar_group_pairs$Data.Group[iscen])
-}
-
+devtools::load_all()
 library(reticulate)
 
-iscen <- 1
-scenario_id <- get_scenario_id("./tests/test_data/FinalDataPrev.csv", iscen)
-group_id <- get_group_id("./tests/test_data/FinalDataPrev.csv", iscen)
+scenario_id <- 36; group_id <- 2
 
 prev <- matrix(
     scan(file = "tests/test_data/prevalence_map.csv"),
@@ -34,12 +9,37 @@ prev <- matrix(
 )
 
 reticulate::use_virtualenv("./.venv", required=TRUE)
-model <- reticulate::import("trachoma")
+module <- reticulate::import("trachoma")
+run_model <- module$Trachoma_Simulation
+
+make_file_path <- function(prefix) {
+    file.path("model_io", sprintf("%s_scen%g.csv", prefix, scenario_id))
+}
+input_file <- make_file_path("InputBet")
+output_file <- make_file_path("OutputPrev")
+infect_output <- make_file_path("InfectOutput")
+mda_file <- "./tests/test_data/InputMDA_scen36_group2.csv"
+
+wrapped_model <- function(seeds, parameters) {
+  ## write input on disk
+  dir.create("model_io")
+  on.exit(unlink("model_io", recursive = TRUE))
+  write.csv(cbind(seeds, parameters), input_file, row.names = F)
+  ## run model
+  run_model(input_file, mda_file, output_file, infect_output,
+            SaveOutput = F, OutSimFilePath = NULL,
+            InSimFilePath = NULL)
+  ## read results and return obsvervable
+  res <- read.csv(output_file)
+  return(100 * res[, dim(res)[2]])
+}
 
 ############## Run AMIS ############
-T <- 2
-N<-rep(100,T)
-param <- trachomAMIS::amis(prevalence_map = prev, transmission_model = model$Trachoma_Simulation, n_params = 2, nsamples = 100, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250, mda_file = "files/InputMDA_scen36_group2.csv", jobid = 1, seed = 1)
+params <- list("nsamples" = 100,
+               "T" = 2,
+               "target_ess" = 250,
+               "delta" = 5)
+param <- trachomAMIS::amis(prev, wrapped_model, params, seed = 1)
 
 expected_param <- read.csv("./tests/test_data/param_iteration_2.csv")
 testthat::expect_equal(param, expected_param)
