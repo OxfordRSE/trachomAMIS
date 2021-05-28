@@ -7,13 +7,7 @@ amis <- function(prevalence_map, transmission_model, nsamples,
     
   print("AMIS iteration 1")
   param <- get_initial_parameters(nsamples)
-  simulated_prevalences <- run_transmission_model(
-    transmission_model,  
-    seeds = 1:nsamples,
-    parameters = param[, 1],
-    IO_file_id,
-    mda_file
-    )
+  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param[,1])
   WW <- compute_weight_matrix(
     prevalence_map,
     simulated_prevalences,
