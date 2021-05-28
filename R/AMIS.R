@@ -1,7 +1,6 @@
 #' @export
 amis <- function(prevalence_map, transmission_model, nsamples,
-                 IO_file_id, delta = 5, T = 100, target_ess = 250,
-                 mda_file, seed = NULL) {
+                 delta = 5, T = 100, target_ess = 250, seed = NULL) {
 
   if(!is.null(seed)) set.seed(seed)
     
