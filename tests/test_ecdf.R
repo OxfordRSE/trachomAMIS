@@ -1,35 +1,53 @@
 devtools::load_all()
 
-sample_prevalence_map_at_IUs <- function(IU_indices, n.map.sampl, scenario_id) {
-    prev = matrix(NA, ncol = n.map.sampl, nrow = length(IU_indices))
-    sample_map <- function(IU_index) {
-        set.seed(scenario_id) # For comparison with test data with `set.seed(Scen[iscen])`
-        rnorm(n.map.sampl, Data$Logit[IU_index], sd = Data$Sds[IU_index])
-    }
-    L <- lapply(IU_indices, sample_map)
-    prev <- sapply(L, function(x) exp(x)/(1+exp(x)))
-
-    return(
-        t(prev*100)
-    )
+args <- commandArgs(trailingOnly = T)
+if (length(args) == 0) {
+    plot_dir <- file.path("tests", "ecdf_plots")
+} else {
+    plot_dir <- args[1]
+    if (!dir.exists(plot_dir)) dir.create(plot_dir)
 }
 
-iscen <- 1
-scenario_id <- 36
-group_id <- 2
-Data = read.csv("./data/FinalDataPrev.csv")
-IU_scen <- which(Data$Scenario == scenario_id & Data$Group == group_id)
-prev <- sample_prevalence_map_at_IUs(IU_scen, n.map.sampl = 3000, scenario_id)
+reticulate::use_virtualenv("./.venv", required=TRUE)
+module <- reticulate::import("trachoma")
+run_model <- module$Trachoma_Simulation
+
+make_file_path <- function(prefix) {
+    file.path("model_io", sprintf("%s_scen36.csv", prefix))
+}
+input_file <- make_file_path("InputBet")
+output_file <- make_file_path("OutputPrev")
+infect_output <- make_file_path("InfectOutput")
+mda_file <- "./tests/test_data/InputMDA_scen36_group2.csv"
+
+wrapped_model <- function(seeds, parameters) {
+  ## write input on disk
+  dir.create("model_io")
+  on.exit(unlink("model_io", recursive = TRUE))
+  write.csv(cbind(seeds, parameters), input_file, row.names = F)
+  ## run model
+  run_model(input_file, mda_file, output_file, infect_output,
+            SaveOutput = F, OutSimFilePath = NULL,
+            InSimFilePath = NULL)
+  ## read results and return obsvervable
+  res <- read.csv(output_file)
+  return(100 * res[, dim(res)[2]])
+}
+
+prev <- matrix(
+    scan(file = "tests/test_data/prevalence_map.csv"),
+    nrow = 3, byrow = T
+)
 
 ############## Run AMIS ############
-T <- 5
-N<-rep(100,T)
-param_and_weights <- trachomAMIS::amis(prevalence_map = prev, transmission_model = NULL, n_params = 2, nsamples = 100, IO_file_id = sprintf("scen%g_group%g",  scenario_id,  group_id), delta = 5, T = T, target_ess = 250)
+params <- list("nsamples" = 100,
+               "T" = 100,
+               "target_ess" = 250,
+               "delta" = 5)
+param <- trachomAMIS::amis(prev, wrapped_model, params)
+
+## Codes for IUs in group 2 with scenario 36
+iucodes <- c("ETH18551", "ETH18644", "ETH18541")
 
 source("tests/qa_ecdf_funcs.R")
-ecdf_errors <- qa_plots(param_and_weights, prev, "tests/plots", Data$IUCodes[IU_scen], scenario_id, group_id)
-
-for (irow in nrow(ecdf_errors)) {
-    testthat::expect_lt(ecdf_errors$ecdf_max_distance[irow], 0.2)
-    testthat::expect_lt(ecdf_errors$ecdf_sqrd_distance[irow], 0.05)
-}
+ecdf_errors <- qa_plots(param, prev, plot_dir, iucodes, scenid = 36, grpid = 2)
