@@ -32,7 +32,7 @@ amis <- function(prevalence_map, transmission_model, nsamples,
     new_params <- sample_new_parameters(clustMix, nsamples, prop$r)
     simulated_prevalences <- append(
       simulated_prevalences,
-      run_transmission_model(transmission_model, seeds(t), new_params[, 1], IO_file_id, mda_file)
+      transmission_model(seeds(t), new_params[,1])
     )
     components <- update_mixture_components(clustMix, components, t)
     param <- rbind(param, new_params)

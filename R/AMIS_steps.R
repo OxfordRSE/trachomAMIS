@@ -40,23 +40,6 @@ write_model_input <- function(seeds, beta, input_file) {
   write.csv(input_params, file = input_file, row.names = FALSE)
 }
 
-run_transmission_model <- function(model_func, seeds, parameters, id, mda_file) {
-  tmp_dir <- "model_io"
-  dir.create(tmp_dir)
-  on.exit(unlink(tmp_dir, recursive = TRUE))
-
-  input_file <- file.path(tmp_dir, sprintf("InputBet_%s.csv", id))
-  write_model_input(seeds, parameters, input_file)
-  output_file <- file.path(tmp_dir, sprintf("OutputPrev_%s.csv", id))
-  infect_output <- file.path(tmp_dir, sprintf("InfectOutput_%s.csv", id))
-
-  model_func(input_file, mda_file, output_file, infect_output,
-             SaveOutput = F, OutSimFilePath = NULL, InSimFilePath = NULL)
-  res <- read.csv(output_file)
-
-  return(100 * res[, dim(res)[2]])
-}
-
 #' Compute weight matrix
 #'
 #' Compute matrix describing the weights for each parameter sampled, for each
