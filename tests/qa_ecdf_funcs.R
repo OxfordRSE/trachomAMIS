@@ -18,8 +18,9 @@ plot_two_ecdf <- function(sample_prev, data_prev, weights){
   data_ecdf_matrix <- Ecdf(data_prev)
   lines(stepfun(sample_ecdf_matrix$Samples, c(0,sample_ecdf_matrix$Heights)), col=4) # red
   lines(stepfun(data_ecdf_matrix$Samples, c(0,data_ecdf_matrix$Heights)), col=2) # blue
-  abline(h=0, lty="dashed", col="gray")
-  abline(h=1, lty="dashed", col="gray")
+  legend(x=70, y=.1, legend = c("Sampled CDF", "CDF from data"), fill = c(4,2))
+  ## abline(h=0, lty="dashed", col="gray")
+  ## abline(h=1, lty="dashed", col="gray")
 }
 
 add.points <- function(M,extra) {
@@ -90,9 +91,9 @@ qa_plots <- function(paramw, data_prev, plot_folder, IUlist, scenid, grpid){
     sample_prev <- paramw[,"sim_prev"]
     weights <- paramw[,3+i]
     ecdf_dist <- TestsCdfs(sample_prev, weights, data_prev, rep(1, n.data))
-    plot_two_ecdf(sample_prev, data_prev[i,], weights)
-    text(.2,.9, paste("sqrd diff=", round(ecdf_dist[4],4)))
-    text(.2,.8, paste("max=", round(ecdf_dist[3],4)))
+    plot_two_ecdfs(sample_prev, data_prev[i,], weights)
+    text(80,.9, paste("sqrd diff=", round(ecdf_dist[4],4)))
+    text(80,.85, paste("max diff=", round(ecdf_dist[3],4)))
     dev.off()
     ecdf_max_distance <- c(ecdf_max_distance, ecdf_dist[3])
     ecdf_sqrd_distance <- c(ecdf_sqrd_distance, ecdf_dist[4])
