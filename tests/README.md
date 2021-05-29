@@ -43,9 +43,19 @@ iteration is a separate file `test_data/param_iteration_?.csv` where
 
 ## Empirical CDF based test
 
-Usage:
+Script `test_ecdf.R` runs the AMIS algorithm for the NTD trachoma
+model and compares the Empirical Cumulant Distribution Function (ECDF)
+for both the weighted infection prevalence (sampled by through the
+AMIS) and reference prevalence data (the reference geostatistical map).
+
+Note that the AMIS is only run for a small subset of pixels.
+
+### Usage
 ```shell
 R --vanilla < test_ecdf.R [plot_dir]
 ```
 If argument `plot_dir` is unspecified, plots are written in directory `tests/ecdf_plots`.
 
+### Expected output
+
+![typical expected ecdf plot](expected_ecdf_plot.png)
