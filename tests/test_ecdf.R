@@ -1,12 +1,12 @@
 devtools::load_all()
 
 args <- commandArgs(trailingOnly = T)
-if (length(args) == 0) {
-    plot_dir <- file.path("tests", "ecdf_plots")
-} else {
+if (!(length(args) == 0)) {
     plot_dir <- args[1]
-    if (!dir.exists(plot_dir)) dir.create(plot_dir)
+} else {
+    plot_dir <- plot_dir <- file.path("tests", "ecdf_plots")
 }
+if (!dir.exists(plot_dir)) dir.create(plot_dir)
 
 reticulate::use_virtualenv("./.venv", required=TRUE)
 module <- reticulate::import("trachoma")
