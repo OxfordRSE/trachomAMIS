@@ -17,7 +17,7 @@ source .venv/bin/activate
 Install the NTD trachoma model:
 
 ```shell
-pip install ntd-trachoma
+pip install tests/ntd-model-trachoma/
 ```
 
 ## Fixed seed regression test
