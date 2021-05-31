@@ -1,0 +1,3 @@
+[submodule "tests/ntd-model-trachoma"]
+	path = tests/ntd-model-trachoma
+	url = git@github.com:ArtRabbitStudio/ntd-model-trachoma.git
