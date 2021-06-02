@@ -1,35 +1,49 @@
 # Tests
 
-# Running the tests
+The implementation of the AMIS algorithm is tested in two ways:
 
-## Installing the NTD trachoma model
+- `test_AMIS.R`: A fixed seed test that verifies that the output of the `amis`
+  function remains consistent with previous implementions. This test
+  only performs a couple of iterations of the AMIS algorithm and is
+  relatively short to run. It is most useful during development.
+- `test_ecfd.R` A test that computes the empirical cumulant distribution function
+  (ECDF) from the sampled weighted parameters and compares it to the
+  ECDF computed from the reference prevalence data. This test is
+  longer to run but provide good assurance that the package is running
+  the AMIS correctly.
+  
+Both tests are integration tests, in the sense that they test the
+top-level function `amis`, as opposed to its building blocks. As of
+June, 2nd 2021, current funding does not allow for the implementation
+of unit tests. 
 
-Navigate to the package top-level (the directory that contains `tests`), _e.g._
-```shell
-cd /path/to/trachomAMIS/
-```
-Create a python virtual environment and activate it:
-```shell
-python -m venv .venv
-source .venv/bin/activate
-```
+## Prerequisites
 
-Install the NTD trachoma model:
-
-```shell
-pip install tests/ntd-model-trachoma/
-```
+To run the tests, you must have the NTD Modelling Consortium trachoma
+model installed.  See installing the NTD trachoma model.
 
 ## Fixed seed regression test
 
-Test `test_AMIS.R` runs two iteration of the AMIS algorithm with a
-fixed seed. It then compares the resulting parameters and weights to
-trusted data that we assume is correct (see Generating test data).
+Test `test_AMIS.R` runs two iteration of the AMIS algorithm for a
+single pixel group (see [pixel groups](#pixel-groups)) and compares the resulting
+parameters and weights to trusted data. The random generator seed is
+fixed to a known value (default `1`) for the numbers to be
+reproducible.
+
+The test can be run from the top-level package directory (the
+directory that contains `DESCRIPTION`) as follows
 
 ```R
-R --no-save < test_AMIS.R
+R --no-save < tests/test_AMIS.R
 ```
-### Generating the test data
+
+The reference data is generated from a trusted implementation of AMIS
+used as a starting point for the development of this package. For more
+information on how to generate the reference data, see [Generating the
+test reference data](#generating-the-test-reference-data) below.
+
+
+### Generating the test reference data
 
 The fixed seed test `test_AMIS.R` reads in a geostatistical map in
 `test_data/prevalence_map.csv`. This map can be re-generated using
@@ -44,18 +58,42 @@ iteration is a separate file `test_data/param_iteration_?.csv` where
 ## Empirical CDF based test
 
 Script `test_ecdf.R` runs the AMIS algorithm for the NTD trachoma
-model and compares the Empirical Cumulant Distribution Function (ECDF)
-for both the weighted infection prevalence (sampled by through the
-AMIS) and reference prevalence data (the reference geostatistical map).
+model for a single pixel group. The script compares the Empirical
+Cumulant Distribution Function (ECDF) for both the weighted infection
+prevalence sampled through the AMIS algorithm and the initial
+prevalence data on which the weights calculation is based.
 
-Note that the AMIS is only run for a small subset of pixels.
+The test can be run from the top-level package directory (the
+directory that contains `DESCRIPTION`) as follows
 
-### Usage
 ```shell
 R --vanilla < test_ecdf.R [plot_dir]
 ```
-If argument `plot_dir` is unspecified, plots are written in directory `tests/ecdf_plots`.
+
+It generates one plot per map pixel in the pixel group.  If argument
+`plot_dir` is unspecified, plots are written in directory
+`tests/ecdf_plots`.
 
 ### Expected output
 
 ![typical expected ecdf plot](expected_ecdf_plot.png)
+
+# Installing the NTD trachoma model
+
+Navigate to the package top-level (the directory that contains `DESCRIPTION`), _e.g._
+
+```shell
+cd /path/to/trachomAMIS/
+```
+Create a python virtual environment and activate it:
+
+```shell
+python -m venv .venv
+source .venv/bin/activate
+```
+
+Install the NTD trachoma model:
+
+```shell
+pip install tests/ntd-model-trachoma/
+```
