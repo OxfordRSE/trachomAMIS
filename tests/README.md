@@ -20,7 +20,8 @@ of unit tests.
 ## Prerequisites
 
 To run the tests, you must have the NTD Modelling Consortium trachoma
-model installed.  See installing the NTD trachoma model.
+model installed.  See [installing the NTD trachoma
+model](#installing-the-ntd-trachoma-model).
 
 ## Fixed seed regression test
 
@@ -85,10 +86,10 @@ Navigate to the package top-level (the directory that contains `DESCRIPTION`), _
 ```shell
 cd /path/to/trachomAMIS/
 ```
-Create a python virtual environment and activate it:
+Create a python 3 virtual environment and activate it:
 
 ```shell
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
