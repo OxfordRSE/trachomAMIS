@@ -1,0 +1,4 @@
+"Country","Region","District","Subdistrict","Geoconnect_ID","Pop_point","Pop_district","Logit","Sds","IUCodes","start_MDA","last_MDA","Scenario"
+"Ethiopia","Amhara","N. Shoa","Baso Naworana",6303,161.3058472,13128.23101,-1.814302776,0.243590266,"ETH18551",2008,2017,36
+"Ethiopia","Amhara","N. Gonder","West Armachoho",6169,11.8172369,44038.36224,-1.921651678,0.312726917,"ETH18644",2008,2017,36
+"Ethiopia","Amhara","N. Shoa","Ankober",6295,133.3574829,133612.7689,-2.088197937,0.251354687,"ETH18541",2008,2017,36
