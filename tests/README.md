@@ -6,7 +6,7 @@ The implementation of the AMIS algorithm is tested in two ways:
   function remains consistent with previous implementions. This test
   only performs a couple of iterations of the AMIS algorithm and is
   relatively short to run. It is most useful during development.
-- `test_ecfd.R` A test that computes the empirical cumulant distribution function
+- `test_ecdf.R` A test that computes the empirical cumulant distribution function
   (ECDF) from the sampled weighted parameters and compares it to the
   ECDF computed from the reference prevalence data. This test is
   longer to run but provide good assurance that the package is running
@@ -79,7 +79,7 @@ It generates one plot per map pixel in the pixel group.  If argument
 
 ![typical expected ecdf plot](expected_ecdf_plot.png)
 
-# Installing the NTD trachoma model
+## Installing the NTD trachoma model
 
 Navigate to the package top-level (the directory that contains `DESCRIPTION`), _e.g._
 
