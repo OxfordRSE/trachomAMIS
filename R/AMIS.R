@@ -42,6 +42,14 @@ amis <- function(prevalence_map, transmission_model, amis_params, seed = NULL) {
     if (min(ess) >= amis_params[["target_ess"]]) break
   }
 
+  if(niter == amis_params[["T"]] && ess <= amis_params[["target_ess"]]) {
+    msg <- sprintf(
+      "All pixels did not reach target ESS (%g) after %g iterations",
+      amis_params[["target_ess"]], niter
+      )
+    warning(msg)
+  }
+
   allseeds <- 1:(niter * nsamples)
   ret <- data.frame(allseeds, param[,-2], simulated_prevalences, t(WW))
   colnames(ret) <- c(
