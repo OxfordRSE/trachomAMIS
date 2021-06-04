@@ -1,8 +1,6 @@
 devtools::load_all()
 library(reticulate)
 
-scenario_id <- 36; group_id <- 2
-
 prev <- matrix(
     scan(file = "tests/test_data/prevalence_map.csv"),
     nrow = 3, byrow = T
@@ -13,12 +11,12 @@ module <- reticulate::import("trachoma")
 run_model <- module$Trachoma_Simulation
 
 make_file_path <- function(prefix) {
-    file.path("model_io", sprintf("%s_scen%g.csv", prefix, scenario_id))
+    file.path("model_io", sprintf("%s.csv", prefix))
 }
 input_file <- make_file_path("InputBet")
 output_file <- make_file_path("OutputPrev")
 infect_output <- make_file_path("InfectOutput")
-mda_file <- "./tests/test_data/InputMDA_scen36_group2.csv"
+mda_file <- "./tests/test_data/InputMDA.csv"
 
 wrapped_model <- function(seeds, parameters) {
   ## write input on disk
