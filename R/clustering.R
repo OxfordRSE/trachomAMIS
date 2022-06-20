@@ -1,92 +1,44 @@
-mvtComp<-function(df=3){
-	list("d"=function(xx,mu=rep(0,ncol(xx)),Sig=diag(1,ncol(xx),ncol(xx)),log=FALSE){
-		mnormt::dmt(xx,mean=mu,S=Sig,df=df,log=log)
-		},"r"=function(n=1,mu=0,Sig=1){
-			mnormt::rmt(n,mean=mu,S=Sig,df=df)
-			})
+#' Fit an MVN mixture model using mclust
+#' Can handle 1D as well as multivariate clustering. dat must have nrow observation and ncol dimensions, even if the number of dimensions is 1.
+#' Uses BIC to determine the best number of components, up to max.components.
+#'
+#' @param dat a MATRIX or dataframe containing the observations to cluster.
+#' @param max.components A postive integer specifying the maximum number of components to fit in the mixture.
+#' @return list containing the mclust output and the best number of components G.
+fit_mixture<-function(dat,max.components=10) {
+  require(mclust)
+  n<-nrow(dat)
+  d<-ncol(dat)
+  if (n<d) {stop("Not enough observations to fit mixture model.\n")}
+  max.components<-min(n,max.components-1) # or even smaller?
+  # Start by fitting one group
+  G<-1 # number of groups
+  if (d==1) {
+    modelName<-"X" 
+  } else {
+    modelName<-"XXX"
+  }
+  clustering<-mclust::mvn(modelName=modelName,data=dat)
+  BIC <- bic(modelName="X",loglik=clustering$loglik,n=n,d=d,G=1)
+  # fit agglomerative clustering model
+  if (d==1) {
+    modelName<-"V"
+  } else {
+    modelName <- "VVV"
+  }
+  hcPairs <- hc(modelName=modelName,data=dat)
+  cut.tree <- hclass(hcPairs,2:max.components)
+  for (g in 2:max.components) {
+    z<-unmap(cut.tree[,g-1]) # extract cluster indices
+    # Run EM algorithm
+    em <- me(modelName,dat,z)
+    em$BIC <- bic(modelName,em$loglik,n,d,g)
+    cat(g,em$BIC,"\n")
+    if (!is.na(em$BIC) && em$BIC>BIC) {
+      clustering<-em
+      G<-g
+      BIC<-em$BIC
+    }
+  }
+  return(c(clustering,G=G))
 }
-
-mclustMix<-function(G=1:10){
-    ## Attaching mclust because issue with using
-    ## mclust::mvn(data, modelName="VVV",). it should point to
-    ## mclust::mvnXXX but this function cannot be found. It might because
-    ## mvnXXX is called from eval(expt, parent.frame()) in mvn.
-    ## See https://github.com/cran/mclust/blob/598224fc49cf8578ade7190ed73a71a51304267d/R/mclust.R#L4532
-	require(mclust)
-	if (any(as.numeric(G)<=0)) stop("G must be positive")
-	
-	function(xx){
-		
-		clustering <- fitMclust(xx,modelName="VVV",G= G)
-		
-		G <- clustering$G
-		
-		if(G==1) clustering$parameters$pro <- 1
-
-		return(list(alpha=clustering$parameters$pro, muHat=t(clustering$parameters$mean), SigmaHat=clustering$parameters$variance$sigma,G=G,cluster=clustering$classification))
-		}		
-}
-
-
-
-fitMclust<-function(xx,modelName="VVV",G= G){
-	
-	options(warn=-1)
-	
-	control <- mclust::emControl(eps=sqrt(.Machine$double.eps))
-	
-	n <- nrow(xx)
-	p <- ncol(xx)
-	
-	clustering <-Gout <- BIC <- NA
-	
-	if (G[1] == 1) {
-		clustering <- mclust::mvn(modelName = modelName, data = xx)
-		BIC <- bic(modelName=modelName,loglik=clustering$loglik,n=n,d=p,G=1)
-		Gout <- 1
-		G <- G[-1]
-		}
-	
-	if (p != 1) {
-		if (n > p) {
-			hcPairs <- hc(modelName="VVV",data=xx)
-			}else {
-				hcPairs <- hc(modelName="EII",data=xx)
-				}
-		}else hcPairs <- NULL
-	if (p > 1 || !is.null(hcPairs)) clss <- hclass(hcPairs, G)
-	
-	for (g in G) {
-		
-		if (p > 1 || !is.null(hcPairs)) {
-			cl <- clss[, as.character(g)]
-			}else {
-				cl <- .qclass(data[subset], as.numeric(g))
-				}
-		z <- unmap(cl, groups = 1:max(cl))
-
-		new <- me(modelName=modelName,data=xx,z=z,control=control)
-		
-		if(!is.na(new$loglik)){
-			
-			BICnew <- bic(modelName=modelName,loglik=new$loglik,n=n,d=p,G=g,equalPro=control$equalPro)
-			
-			if(is.na(BIC)){
-				clustering <- new
-				BIC <- BICnew
-				Gout <- g
-				}else{
-					if(BICnew>BIC){
-						clustering <- new
-						BIC <- BICnew
-						Gout <- g
-						}
-					}
-			}
-		}
-	
-	options(warn=0)
-	
-	return(c(clustering,G=Gout))
-		
-	}
