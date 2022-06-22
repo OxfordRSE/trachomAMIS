@@ -33,12 +33,12 @@ fit_mixture<-function(dat,max.components=10) {
     # Run EM algorithm
     em <- me(modelName,dat,z)
     em$BIC <- bic(modelName,em$loglik,n,d,g)
-    cat(g,em$BIC,"\n")
     if (!is.na(em$BIC) && em$BIC>BIC) {
       clustering<-em
       G<-g
       BIC<-em$BIC
     }
   }
-  return(c(clustering,G=G))
+  return(list(G=G,probs=clustering$parameters$pro,Mean=clustering$parameters$mean,Sigma=clustering$parameters$variance$sigma,
+    BIC=BIC,modelName=clustering$modelName))
 }
