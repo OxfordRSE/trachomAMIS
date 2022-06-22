@@ -7,8 +7,6 @@ _Integrating Geostatistical Maps And Transmission Models Using Adaptive Multiple
 Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez, T. Deirdre Hollingsworth, Simon E.F. Spencer
 medRxiv 2020.08.03.20146241; doi: https://doi.org/10.1101/2020.08.03.20146241 
 
-Currently, the implementation is limited to 1D models.
-
 # Installation
 
 Make sure you have the package [devtools](https://devtools.r-lib.org/)
