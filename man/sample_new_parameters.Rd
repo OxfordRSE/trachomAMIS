@@ -4,23 +4,28 @@
 \alias{sample_new_parameters}
 \title{Sample new parameters}
 \usage{
-sample_new_parameters(clustMix, n_samples, rprop)
+sample_new_parameters(mixture, n_samples, df = 3, prior, log)
 }
 \arguments{
-\item{clustMix}{A list of mixture components as returned by
+\item{mixture}{A list of mixture components as returned by
 \code{\link{evaluate_mixture}}}
 
-\item{rprop}{The proposal distribution as returned by \code{mvtComp()$r}.}
+\item{df}{The degrees of freedom for the t-dsitributed proposal distribution.}
+
+\item{prior}{list containing the functions \code{rprior} and \code{dprior}}
+
+\item{log}{A logical indicating if densities}
 
 \item{nsamples}{A number of new parameters to sample (integer)}
 }
 \value{
-A NSAMPLES x 2 matrix containing the sampled parameter values.
+A list containing \code{params}, an \code{nsamples} x d matrix containing the sampled parameter values and
+\code{prior_density}, the corresponding vector of prior densities.
 }
 \description{
-This function generates NSAMPLES new model parameter values according the
-proposal distribution RPROP and the mixture components CLUSTMIX.
+This function generates \code{nsamples} new model parameter values according the
+t-distribution with \code{df} degrees of freedom and the mixture components \code{mixture}.
 }
 \seealso{
-\code{\link{mvtComp}}
+\code{\link{fit_mixture}}
 }
