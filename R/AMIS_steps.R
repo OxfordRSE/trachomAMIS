@@ -242,7 +242,7 @@ update_mixture_components <- function(mixture, components, t) {
 #' @return A vector containing the prior/proposal ratio for each row in
 #'     \code{param}
 compute_prior_proposal_ratio <- function(components, param, prior_density, df, log) {
-  probs <- components$probs # /sum(unlist(components$PP)) # to normalise?
+  probs <- components$probs # /sum(unlist(components$probs)) # to normalise?
   Sigma <- components$Sigma
   Mean <- components$Mean
   G <- sum(components$G)

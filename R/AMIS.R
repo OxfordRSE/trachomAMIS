@@ -17,7 +17,7 @@
 #' \item{\code{mixture_samples}the number of samples used to represent the weighted parameters in the mixture fitting.}
 #' \item{\code{df}the degrees of freedom in the t-distributions, used to yield a heavy tailed proposal.}
 #' \item{\code{target_ess}the target effective sample size.}
-#' \item{\code{log} logicalindicating if calculations are to be performed on log scale.} 
+#' \item{\code{log} logical indicating if calculations are to be performed on log scale.} 
 #' \item{\code{max_iters}maximum number of AMIS iterations.}
 #' }
 #' @param seed Optional seed for the random number generator
