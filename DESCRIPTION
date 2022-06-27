@@ -1,19 +1,24 @@
-Package: trachomAMIS
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Package: AMISforInfectiousDiseases
+Title: Fit transmission models to maps using AMIS
+Version: 0.1.0.0000
 Authors@R:
-    person(given = "First",
-           family = "Last",
+    c(person(given = "Simon",
+           family = "Spencer",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+           email = "s.e.f.spencer@warwick.ac.uk",
+           comment = c(ORCID = "0000-0002-8375-5542")),
+    person(given = "Renata",
+           family = "Retkute",
+           role = c("aut")),
+    person(given = "Thilbault",
+          family = "Lestang",
+          role="aut"))
+Description: Fits infectious disease models to prevalence maps using the Adaptive Multiple Importance Sampling algorithm.
+License: use_gpl3_license()
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0
 Imports:
     mclust,
     mnormt
