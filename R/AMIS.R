@@ -89,6 +89,5 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     paramnames<-colnames(param)
   }
   colnames(ret) <- c("seeds",paramnames,"sim_prev",iunames)
-  names(ess) <- iunames
-  return(list(output=ret,ess=ess))
+  return(ret)
 }
