@@ -5,10 +5,12 @@
 #' Run the AMIS algorithm to fit a transmission model to a map
 #'
 #' @param prevalence_map An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
-#' The location names are inherited from \code{rownames(prevalence_map)} if possible. If instead, an analytic form of the prevalence map is available,
-#' supply a list containing objects \code{data} (an L x M matrix of data) and \code{likelihood} a function taking a row of data and the output from the transmission
-#' model as arguments (and logical \code{log}) and returning the (log)-likelihood. 
-#' @param transmission_model A function taking a vector of seeds and a matrix of parameter vectors as inputs.
+#' The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with timepoints entries.
+#' Each entry is a list containing objects \code{data} (an L x M matrix of data); \code{likelihood} a function taking a row of data and the output from the transmission
+#' model as arguments (and logical \code{log}) and returning the (log)-likelihood; and \code{method}, a string
+#' with value "empirical", "histogram" or "analytical". 
+#' @param transmission_model A function taking a vector of n seeds and an n x d matrix of parameter vectors as inputs
+#'  and producing a n x timepoints MATRIX of prevalences as output (even when timepoints=1).
 #' @param prior A list containing the functions \code{dprior} and \code{rprior} (density and RNG).
 #' \code{rprior} must produce an n by d MATRIX of parameters, even when d=1.
 #' parameter names are inherited from the \code{colnames} from the output of \code{rprior} if possible.
@@ -21,14 +23,13 @@
 #' \item{\code{target_ess}the target effective sample size.}
 #' \item{\code{log} logical indicating if calculations are to be performed on log scale.} 
 #' \item{\code{max_iters}maximum number of AMIS iterations.}
-#' \item{\code{method}string describing the appropriate method to use, e.g. empirical.}
-#' \item{\code{timepoints}an integer describing the number of timepoints to fit the model to (not yet implemented).}
 #' }
 #' @param seed Optional seed for the random number generator
 #' @return A list containing a dataframe of the sampled parameters, simulation seed, and weight in each location, plus a vector
 #' #' called ess containing the obtained ess at each location.  
 #' @export
 amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = NULL) {
+  if (is.matrix(prevalence_map)) {prevalence_map=list(list(data=prevalence_map,method="empirical"))}
   # add some checks to beginning of function with helpful error messages?
   if(!is.null(seed)) set.seed(seed)
   nsamples <- amis_params[["nsamples"]]
@@ -38,7 +39,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   # to avoid duplication, evaluate prior density now.
   prior_density<-sapply(1:nsamples,function(b) {prior$dprior(param[b,],log=amis_params[["log"]])})
   # Simulate from transmission model
-  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param) # SS changed to pass ALL parameters to the transmission model
+  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param) 
   weight_matrix <- compute_weight_matrix(
     prevalence_map,
     simulated_prevalences,
@@ -60,10 +61,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     mean_weights <- update_according_to_ess_value(weight_matrix, ess, amis_params[["target_ess"]],amis_params[["log"]])
     mixture <- weighted_mixture(param, amis_params[["mixture_samples"]], mean_weights, amis_params[["log"]])
     new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
-    simulated_prevalences <- append(
-      simulated_prevalences,
-      transmission_model(seeds(t), new_params$params)
-    )
+    simulated_prevalences <- rbind(simulated_prevalences,transmission_model(seeds(t), new_params$params))
     components <- update_mixture_components(mixture, components, t)
     param <- rbind(param, new_params$params)
     prior_density <- c(prior_density,new_params$prior_density)
@@ -82,7 +80,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     warning(msg)
   }
   allseeds <- 1:(niter * nsamples)
-  ret <- data.frame(allseeds, param, simulated_prevalences, t(weight_matrix))
+  ret <- data.frame(allseeds, param, simulated_prevalences, weight_matrix)
   if (is.null(rownames(prevalence_map))) {
     iunames<-sapply(1:dim(weight_matrix)[1], function(idx) sprintf("iu%g", idx))
   } else {
@@ -93,6 +91,11 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   } else {
     paramnames<-colnames(param)
   }
-  colnames(ret) <- c("seeds",paramnames,"sim_prev",iunames)
+  if (is.null(colnames(simulated_prevalences))) {
+    prevnames<-sapply(1:dim(simulated_prevalences)[2], function(idx) sprintf("prev%g", idx))
+  } else {
+    prevnames<-paste0("prev",colnames(simulated_prevalences))
+  }
+  colnames(ret) <- c("seeds",paramnames,prevnames,iunames)
   return(ret)
 }
