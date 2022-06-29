@@ -17,6 +17,7 @@ default_amis_params <- function() {
 #'
 #' @param first_weight A vector containing the values for the right hand side of
 #'     the weight expression. Should be of the same length as the rows in \code{simulated_prevalence}.
+#' @return normalised weight matrix.
 compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_params, first_weight) {
   timepoints<-length(prevalence_map)
   n_locs <- dim(prevalence_map[[1]]$data)[1]
