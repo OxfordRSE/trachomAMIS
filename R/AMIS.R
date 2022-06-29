@@ -25,8 +25,7 @@
 #' \item{\code{max_iters}maximum number of AMIS iterations.}
 #' }
 #' @param seed Optional seed for the random number generator
-#' @return A list containing a dataframe of the sampled parameters, simulation seed, and weight in each location, plus a vector
-#' #' called ess containing the obtained ess at each location.  
+#' @return A dataframe of the sampled parameters, simulation seed, and weight in each location.
 #' @export
 amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = NULL) {
   if (is.matrix(prevalence_map)) {prevalence_map=list(list(data=prevalence_map,method="empirical"))}
