@@ -50,7 +50,7 @@ compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_par
 #' computed from the transmission model for the specific parameter sample.
 #'
 #' @param prevalence_map The geostatistical prevalence data. An L x M matrix where L
-#'     is the number of IUs and M the number of prevalence samples. (double)
+#'     is the number of locations and M the number of prevalence samples. (double)
 #' @param prev_sim A vector containing the simulated prevalence value for each
 #'     parameter sample. (double)
 #' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
@@ -80,13 +80,13 @@ compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_param
 #' Compute weight matrix using (semi-)analytical Radon-Nikodym derivative
 #'
 #' Compute matrix describing the weights for each parameter sampled, for each
-#' Implementation Unit (IU). One row per sample, one column per IU.  Each weight
+#' location. One row per sample, one column per location.  Each weight
 #' is computed based on the (semi-)analytical Radon-Nikodym derivative, taking into account
-#' geostatistical prevalence data for the specific IU and the prevalence value
+#' geostatistical prevalence data for the specific location and the prevalence value
 #' computed from the transmission model for the specific parameter sample.
 #'
 #' @param prevalence_map The geostatistical prevalence map. A list containing objects:
-#' \code{data}, an L x M matrix of data (where L is the number of IUs and
+#' \code{data}, an L x M matrix of data (where L is the number of locations and
 #'  M the number of data points); and \code{likelihood}, a function taking a row of data
 #'   and the output from the transmission
 #' model as arguments (and logical \code{log}) and returning the (log)-likelihood.
@@ -94,7 +94,8 @@ compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_param
 #'     parameter sample. (double)
 #' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
 #'
-#' @param weight_matrix An existing N x L weight matrix to update,
+#' @param weight_matrix An existing N x L weight matrix to update.
+#' @return An updated weight matrix.
 compute_weight_matrix_analytical <- function(prevalence_map, prev_sim, amis_params, weight_matrix) {
   likelihood <- prevalence_map$likelihood
   delta<-amis_params[["delta"]]
@@ -112,6 +113,45 @@ compute_weight_matrix_analytical <- function(prevalence_map, prev_sim, amis_para
   wh<-which(!is.na(prevalence_map$data[,1])) # if there is no data for a location, do not update weights.
   for (i in wh) {
     weight_matrix[i,] <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map$data[i, ], weight_vector=weight_matrix[i,])
+  }
+  return(weight_matrix)
+}
+
+#' Compute weight matrix using empirical Radon-Nikodym derivative (with fixed breaks)
+#'
+#' Compute matrix describing the weights for each parameter sampled, for each
+#' location. One row per sample, one column per location.  Each weight
+#' is computed based on the empirical Radon-Nikodym derivative, taking into account
+#' geostatistical prevalence data for the specific location and the prevalence value
+#' computed from the transmission model for the specific parameter sample.
+#'
+#' @param prevalence_map The geostatistical prevalence data. An L x M matrix where L
+#'     is the number of locations and M the number of prevalence samples. (double)
+#' @param prev_sim A vector containing the simulated prevalence value for each
+#'     parameter sample. (double)
+#' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
+#'
+#' @param weight_matrix A matrix containing the current values of the weights.
+#' @return An updated weight matrix.
+compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_params, weight_matrix) {
+  breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence. 
+  if (min(breaks)>0) {breaks<-c(0,breaks)}
+  L<-length(breaks)
+  lwr<-breaks[1:(L-1)]
+  upr<-breaks[2:L]
+  locs<-which(!is.na(prevalence_map$data[,1])) # if there is no data for a location, do not update weights.
+  for (l in 1:L) {
+    wh<-which(prev_sim>=lwr[l] & prev_sim<upr[l])
+    for (i in locs) {
+      f<-length(which(prevalence_map$data[i,]>=lwr[l] & prevalence_map$data[i,]<upr[l]))
+      g_terms<-weight_matrix[i,wh]
+      if (amis_params[["log"]]) {
+        M<-max(g_terms)
+        weight_matrix[i,wh]<-weight_matrix[i,wh]+log(f)-M-log(sum(exp(gterms-M)))
+      } else {
+        weight_matrix[i,wh]<-weight_matrix[i,wh]*f/sum(g_terms)
+      }
+    }
   }
   return(weight_matrix)
 }
