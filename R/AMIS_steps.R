@@ -121,7 +121,7 @@ compute_weight_matrix_analytical <- function(prevalence_map, prev_sim, amis_para
   }
   wh<-which(!is.na(prevalence_map$data[,1])) # if there is no data for a location, do not update weights.
   for (i in wh) {
-    weight_matrix[i,] <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map$data[i, ], weight_vector=weight_matrix[i,])
+    weight_matrix[,i] <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map$data[i, ], weight_vector=weight_matrix[,i])
   }
   return(weight_matrix)
 }
@@ -153,12 +153,12 @@ compute_weight_matrix_histogram<-function(prevalence_map, prev_sim, amis_params,
     wh<-which(prev_sim>=lwr[l] & prev_sim<upr[l])
     for (i in locs) {
       f<-length(which(prevalence_map$data[i,]>=lwr[l] & prevalence_map$data[i,]<upr[l]))
-      g_terms<-weight_matrix[i,wh]
+      g_terms<-weight_matrix[wh,i]
       if (amis_params[["log"]]) {
         M<-max(g_terms)
-        weight_matrix[i,wh]<-weight_matrix[i,wh]+log(f)-M-log(sum(exp(g_terms-M)))
+        weight_matrix[wh,i]<-weight_matrix[wh,i]+log(f)-M-log(sum(exp(g_terms-M)))
       } else {
-        weight_matrix[i,wh]<-weight_matrix[i,wh]*f/sum(g_terms)
+        weight_matrix[wh,i]<-weight_matrix[wh,i]*f/sum(g_terms)
       }
     }
   }
