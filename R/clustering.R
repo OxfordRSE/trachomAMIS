@@ -19,6 +19,7 @@ fit_mixture<-function(dat,max.components=10) {
   require(mclust)
   n<-nrow(dat)
   d<-ncol(dat)
+  colnames(dat)<-NULL # remove colnames to prevent instigating bug in mclust
   if (n<d) {stop("Not enough observations to fit mixture model.\n")}
   max.components<-min(n,max.components-1) # or even smaller?
   # Start by fitting one group
@@ -29,7 +30,7 @@ fit_mixture<-function(dat,max.components=10) {
     modelName<-"XXX"
   }
   clustering<-mclust::mvn(modelName=modelName,data=dat)
-  BIC <- bic(modelName="X",loglik=clustering$loglik,n=n,d=d,G=1)
+  BIC <- bic(modelName=modelName,loglik=clustering$loglik,n=n,d=d,G=1)
   # fit agglomerative clustering model
   if (d==1) {
     modelName<-"V"
@@ -49,6 +50,7 @@ fit_mixture<-function(dat,max.components=10) {
       BIC<-em$BIC
     }
   }
-  return(list(G=G,probs=clustering$parameters$pro,Mean=clustering$parameters$mean,Sigma=clustering$parameters$variance$sigma,
+  return(list(G=G,probs=clustering$parameters$pro,Mean=matrix(clustering$parameters$mean,d,G),
+              Sigma=array(clustering$parameters$variance$sigma,c(d,d,G)),
     BIC=BIC,modelName=clustering$modelName))
 }
