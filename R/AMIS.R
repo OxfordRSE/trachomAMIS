@@ -5,7 +5,7 @@
 #' Run the AMIS algorithm to fit a transmission model to a map
 #'
 #' @param prevalence_map An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
-#' The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with timepoints entries.
+#' The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with one entry for each timepoint.
 #' Each entry is a list containing objects \code{data} (an L x M matrix of data); \code{likelihood} a function taking a row of data and the output from the transmission
 #' model as arguments (and logical \code{log}) and returning the (log)-likelihood; and \code{method}, a string
 #' with value "empirical", "histogram" or "analytical".
@@ -29,7 +29,8 @@
 #' #' called ess containing the obtained ess at each location.  
 #' @export
 amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = NULL) {
-  if (is.matrix(prevalence_map)) {prevalence_map=list(list(data=prevalence_map,method="empirical"))}
+  if (is.matrix(prevalence_map) || is.data.frame(prevalence_map)) {prevalence_map=list(list(data=prevalence_map,method="empirical"))}
+  # add some checks to beginning of function with helpful error messages?
   if(!is.null(seed)) set.seed(seed)
   nsamples <- amis_params[["nsamples"]]
   print("AMIS iteration 1")
@@ -81,7 +82,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   allseeds <- 1:(niter * nsamples)
   ret <- data.frame(allseeds, param, simulated_prevalences, weight_matrix)
   if (is.null(rownames(prevalence_map))) {
-    iunames<-sapply(1:dim(weight_matrix)[1], function(idx) sprintf("iu%g", idx))
+    iunames<-sapply(1:dim(weight_matrix)[2], function(idx) sprintf("iu%g", idx))
   } else {
     iunames<-rownames(prevalence_map)
   }
