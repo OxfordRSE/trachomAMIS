@@ -1,16 +1,16 @@
-# SS note: Provide option to supply prevalence_map as an analytical function (likelihood and data), rather than Monte Carlo samples
-# SS note: Also implement Renata's RN derivative?
 # SS note: Also implement minimum error RN derivative?
 
 #' Run the AMIS algorithm to fit a transmission model to a map
 #'
 #' @param prevalence_map An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
 #' The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with one entry for each timepoint.
-#' Each entry is a list containing objects \code{data} (an L x M matrix of data); \code{likelihood} a function taking a row of data and the output from the transmission
-#' model as arguments (and logical \code{log}) and returning the (log)-likelihood; and \code{method}, a string
-#' with value "empirical", "histogram" or "analytical".
+#' Each entry must be a list containing objects \code{data} (an L x M matrix of data as above);
+#' and \code{likelihood} a function taking arguments \code{data} (a row of data from the above matrix),
+#' \code{prevalence} (the output from the transmission model) and optional logical \code{log}, which returns the (log)-likelihood.
+#' If a likelihood is not specified then it is assumed that
+#' the data consist of samples from a geo-statistical model and empirical methods are used.  
 #' @param transmission_model A function taking a vector of n seeds and an n x d matrix of parameter vectors as inputs
-#'  and producing a n x timepoints MATRIX of prevalences as output (even when timepoints=1).
+#'  and producing a n x timepoints MATRIX of prevalences as output (it must be a matrix even when timepoints=1).
 #' @param prior A list containing the functions \code{dprior} and \code{rprior} (density and RNG).
 #' \code{rprior} must produce an n by d MATRIX of parameters, even when d=1.
 #' parameter names are inherited from the \code{colnames} from the output of \code{rprior} if possible.
@@ -23,13 +23,14 @@
 #' \item{\code{target_ess}the target effective sample size.}
 #' \item{\code{log} logicalindicating if calculations are to be performed on log scale.} 
 #' \item{\code{max_iters}maximum number of AMIS iterations.}
+#' \item{\code{breaks}optional vector specifying the breaks for the histogram.}
 #' }
 #' @param seed Optional seed for the random number generator
 #' @return A list containing a dataframe of the sampled parameters, simulation seed, and weight in each location, plus a vector
 #' #' called ess containing the obtained ess at each location.  
 #' @export
 amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = NULL) {
-  if (is.matrix(prevalence_map) || is.data.frame(prevalence_map)) {prevalence_map=list(list(data=prevalence_map,method="empirical"))}
+  if (is.matrix(prevalence_map) || is.data.frame(prevalence_map)) {prevalence_map=list(list(data=prevalence_map))}
   # add some checks to beginning of function with helpful error messages?
   if(!is.null(seed)) set.seed(seed)
   nsamples <- amis_params[["nsamples"]]
@@ -81,10 +82,10 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   }
   allseeds <- 1:(niter * nsamples)
   ret <- data.frame(allseeds, param, simulated_prevalences, weight_matrix)
-  if (is.null(rownames(prevalence_map))) {
+  if (is.null(rownames(prevalence_map[[1]]$data))) {
     iunames<-sapply(1:dim(weight_matrix)[2], function(idx) sprintf("iu%g", idx))
   } else {
-    iunames<-rownames(prevalence_map)
+    iunames<-rownames(prevalence_map[[1]]$data)
   }
   if (is.null(colnames(param))) {
     paramnames<-sapply(1:dim(param)[2], function(idx) sprintf("param%g", idx))
