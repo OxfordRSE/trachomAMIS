@@ -18,9 +18,9 @@ compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_par
   for (t in 1:timepoints) {
     # Update the weights by the latest likelihood (filtering)
     if (is.null(amis_params[["breaks"]])) {
-      weight_matrix <- compute_weight_empirical(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
+      weight_matrix <- compute_weight_matrix_empirical(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
     } else {
-      weight_matrix <- compute_weight_histogram(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
+      weight_matrix <- compute_weight_matrix_histogram(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
     }
   }
   # renormalise weights
@@ -94,6 +94,8 @@ compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_param
 compute_weight_matrix_histogram<-function(prevalence_map, prev_sim, amis_params, weight_matrix) {
   breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence. 
   if (min(breaks)>0) {breaks<-c(0,breaks)}
+  if (min(prev_sim)<min(breaks)) {breaks<-c(min(prev_sim),breaks)}
+  if (max(prev_sim)>=max(breaks)) {breaks<-c(breaks,max(prev_sim)+0.001)}
   L<-length(breaks)
   lwr<-breaks[1:(L-1)]
   upr<-breaks[2:L]
@@ -106,8 +108,8 @@ compute_weight_matrix_histogram<-function(prevalence_map, prev_sim, amis_params,
         if (is.null(prevalence_map$likelihood)) {
           f<-length(which(prevalence_map$data[i,]>=lwr[l] & prevalence_map$data[i,]<upr[l]))/wdt[l]
         } else {
-          like<-function(idx,prev_data,prev_sim) {return(likelihood(prev_data[idx,],prev_sim[idx],log=amis_params[["log"]]))}
-          f<-sapply(wh,like,prev_data=prevalence_map$data,prev_sim=prev_sim)
+          like<-function(idx,prev_data,prev_sim) {return(likelihood(prev_data[i,],prev_sim[idx],log=amis_params[["log"]]))}
+          f<-sapply(1:length(wh),like,prev_data=prevalence_map$data,prev_sim=prev_sim[wh])
         }
         g_terms<-weight_matrix[wh,i]
         if (amis_params[["log"]]) {
