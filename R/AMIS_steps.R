@@ -63,9 +63,18 @@ compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_param
     g_terms <- weight_vector[which((prev_sim >= prev_sim[idx] - delta) & (prev_sim <= prev_sim[idx] + delta))]
     if (log) {
       M<-max(g_terms)
-      return(weight_vector[idx]+log(f)-M-log(sum(exp(g_terms-M))))
+      if (M>-Inf) {
+        return(weight_vector[idx]+log(f)-M-log(sum(exp(g_terms-M))))
+      } else {
+        return(-Inf)
+      }
     } else {
-      return(weight_vector[idx]*f/sum(g_terms))
+      S<-sum(g_terms)
+      if (S>0) {
+        return(weight_vector[idx]*f/S)
+      } else {
+        return(0)
+      }
     }
   }
   locs<-which(!is.na(prevalence_map$data[,1])) # if there is no data for a location, do not update weights.
