@@ -123,9 +123,10 @@ compute_weight_matrix_histogram<-function(prevalence_map, prev_sim, amis_params,
         g_terms<-weight_matrix[wh,i]
         if (amis_params[["log"]]) {
           M<-max(g_terms)
-          weight_matrix[wh,i]<-weight_matrix[wh,i]+log(f)-M-log(sum(exp(g_terms-M)))+log(wdt[l])
+          if (M>-Inf) {weight_matrix[wh,i]<-weight_matrix[wh,i]+log(f)-M-log(sum(exp(g_terms-M)))+log(wdt[l])}
         } else {
-          weight_matrix[wh,i]<-weight_matrix[wh,i]*f/sum(g_terms)*wdt[l]
+          S<-sum(g_terms)
+          if (S>0) {weight_matrix[wh,i]<-weight_matrix[wh,i]*f/S*wdt[l]}
         }
       }
     }
