@@ -13,7 +13,7 @@ Make sure you have the package [devtools](https://devtools.r-lib.org/)
 installed. Then
 
 ```R
-devtools::install_github("OxfordRSE/trachomAMIS")
+devtools::install_github("drsimonspencer/AMISforInfectiousDiseases")
 ```
 
 # Usage
@@ -23,7 +23,7 @@ geostatistical map, a model and returns sampled parameters and their
 associated weights.
 
 ```R
-param_and_weights <- trachomAMIS::amis(geo_map, model, amis_params)
+param_and_weights <- AMISforInfectiousDiseases::amis(geo_map, model, prior, amis_params)
 ```
 
 - `geo_map`: A matrix representing the geostatistical map, with one
@@ -33,9 +33,11 @@ param_and_weights <- trachomAMIS::amis(geo_map, model, amis_params)
   function.
 - `amis_params`: A list containing the parameters for the AMIS algorithm.
   - `nsamples`: The number of sample parameters to draw at each iteration.
+  - `mixture_samples`: The number of samples drawn from the weighted distribution to fit a new mixture to.
   - `target_ess`: The target effective sample size.
-  - `T`: The maximum number of iterations.
-  - `delta`: The Randon-Nikodym parameter.
+  - `max_iters`: The maximum number of iterations.
+  - `delta`: The Randon-Nikodym derivative smoothing parameter.
+  - `log`: logical indicating whether to work with log weights. 
   
 ## Defining a model function
 
@@ -46,12 +48,14 @@ following interface
 observables <- model_func(seeds, parameters)
 ```
 
-- `parameters`: A vector of parameter values (`double`)
+- `parameters`: A matrix of parameter values (`double`) 
 - `seeds`: A vector of seeds (`integer`)
 
 Function `model_func` is expected to run the model for each pair
 (`seed`, `parameter`) and return the corresponding values for the
-observable (_e.g._ infection prevalence).
+observable (_e.g._ infection prevalence). `parameter` must be a matrix
+with ncols equal to the dimension of the parameter space and the output
+must be a matrix with ncols equal to the number of observed timepoints.
 
 ## Wrapping a model
 
