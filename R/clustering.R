@@ -38,12 +38,12 @@ fit_mixture<-function(dat,max.components=10) {
     modelName <- "VVV"
   }
   hcPairs <- hc(modelName=modelName,data=dat)
-  cut.tree <- hclass(hcPairs,2:max.components)
+  cut.tree <- hclass(hcPairs=hcPairs,G=2:max.components)
   for (g in 2:max.components) {
     z<-unmap(cut.tree[,g-1]) # extract cluster indices
     # Run EM algorithm
-    em <- me(modelName,dat,z)
-    em$BIC <- bic(modelName,em$loglik,n,d,g)
+    em <- me(modelName=modelName,data=dat,z=z)
+    em$BIC <- bic(modelName=modelName,loglik=em$loglik,n=n,d=d,G=g)
     if (!is.na(em$BIC) && em$BIC>BIC) {
       clustering<-em
       G<-g
