@@ -1,16 +1,14 @@
-# SS note: Also implement minimum error RN derivative?
-
 #' Run the AMIS algorithm to fit a transmission model to a map
 #'
 #' @param prevalence_map An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
 #' The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with one entry for each timepoint.
 #' Each entry must be a list containing objects \code{data} (an L x M matrix of data as above);
-#' and \code{likelihood} a function taking arguments \code{data} (a row of data from the above matrix),
-#' \code{prevalence} (the output from the transmission model) and optional logical \code{log}, which returns the (log)-likelihood.
+#' and \code{likelihood} a function taking arguments \code{data} (a matrix of data as above),
+#' \code{prevalence} (a matrix of output from the transmission model) and optional logical \code{log}, which returns the vector of (log)-likelihoods.
 #' If a likelihood is not specified then it is assumed that
 #' the data consist of samples from a geo-statistical model and empirical methods are used.  
 #' @param transmission_model A function taking a vector of n seeds and an n x d matrix of parameter vectors as inputs
-#'  and producing a n x timepoints MATRIX of prevalences as output (it must be a matrix even when timepoints=1).
+#'  and producing a n x timepoints MATRIX of prevalences as output (it must be a matrix even when timepoints==1).
 #' @param prior A list containing the functions \code{dprior} and \code{rprior} (density and RNG).
 #' \code{rprior} must produce an n by d MATRIX of parameters, even when d=1.
 #' parameter names are inherited from the \code{colnames} from the output of \code{rprior} if possible.
