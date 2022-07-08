@@ -1,6 +1,172 @@
 #' Compute weight matrix using appropriate method
 #' 
 #' Wrapper function to select appropriate method to calculate weight matrix.
+#' @param likelihoods An array with dimension n_tims,n_locs,n_sims -- ie timepoints x locations x simulations.
+#' @param simulated_prevalence An n_sims x n_tims matrix containing the simulated prevalence values for each of the
+#'     parameter samples. (double)
+#' @param amis_params A list of parameters, e.g. from \code{\link{default_amis_params}}.
+#' @param first_weight A vector containing the values for the right hand side of
+#'     the weight expression. Should be of the same length as the rows in \code{simulated_prevalence}.
+#' @return normalised weight matrix.
+compute_weight_matrix <- function(likelihoods, simulated_prevalence, amis_params, first_weight) {
+  n_tims <- dim(likelihoods)[1]
+  n_locs <- dim(likelihoods)[2]
+  n_sims <- dim(likelihoods)[3]
+  weight_matrix <- matrix(rep(first_weight,n_locs), nrow = n_sims, ncol = n_locs)
+  for (t in 1:n_tims) {
+    # Update the weights by the latest likelihood (filtering)
+    if (is.null(amis_params[["breaks"]])) {
+      weight_matrix <- compute_weight_matrix_empirical(t(likelihoods[t,,]),simulated_prevalence[,t],amis_params,weight_matrix)
+    } else {
+      weight_matrix <- compute_weight_matrix_histogram(t(likelihoods[t,,]),simulated_prevalence[,t],amis_params,weight_matrix)
+    }
+  }
+  # renormalise weights
+  if (amis_params[["log"]]) {
+    M<-apply(weight_matrix,2,max)
+    wh<-which(M>-Inf)
+    weight_matrix[,wh]<-weight_matrix[,wh]-rep(M[wh]+log(colSums(exp(weight_matrix[,wh,drop=FALSE]-rep(M[wh],each=n_sims)))),each=n_sims)
+  } else {
+    S<-colSums(weight_matrix)
+    wh<-which(S>0)
+    weight_matrix[,wh]<-weight_matrix[,wh]/rep(S[wh],each=n_sims)
+  }
+  return(weight_matrix)
+}
+
+#' Compute likelihood for each additional simulation across timepoints
+#' 
+compute_likelihood<-function(prevalence_map,simulated_prevalences,amis_params,likelihoods=NULL) {
+  n_tims<-length(prevalence_map)
+  n_locs <- dim(prevalence_map[[1]]$data)[1]
+  n_sims <- dim(simulated_prevalences)[1]
+  lik<-array(NA,c(n_tims,n_locs,n_sims)) # this way around to avoid abind -- different to elsewhere
+  for (t in 1:n_tims) {
+    lik[t,,]<-evaluate_likelihood(prevalence_map[[t]],simulated_prevalences[,t],amis_params) 
+  }
+  if (!is.null(likelihoods)) {lik<-array(c(likelihoods,lik),c(n_tims,n_locs,dim(likelihoods)[3]+n_sims))}
+  return(lik)
+}
+
+#' Evaluate likelihood for each additional simulation for a single timepoint
+#' 
+evaluate_likelihood<-function(prevalence_map,prev_sim,amis_params) {
+  locs<-which(!is.na(prevalence_map$data[,1])) # if there is no data for a location, do not update weights.
+  f<-matrix(NA,dim(prevalence_map$data)[1],length(prev_sim))
+  if (!is.null(prevalence_map$likelihood)) {
+    f[locs,]<-t(prevalence_map$likelihood(prevalence_map$data[locs,,drop=FALSE],prev_sim,amis_params[["log"]])) # likelihood function must be vectorised.
+  } else {
+    if (is.null(amis_params[["breaks"]])) {
+      delta<-amis_params[["delta"]]
+      for (i in 1:length(prev_sim)) {
+        f[,i]<-rowSums(abs(prevalence_map$data[locs,,drop=FALSE]-prev_sim[i])<=delta/2)/delta
+      }
+    } else {
+      breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence. 
+      L<-length(breaks)
+      lwr<-breaks[1:(L-1)]
+      upr<-breaks[2:L]
+      wdt<-upr-lwr
+      for (l in 1:L) {
+        wh<-which(prev_sim>=lwr[l] & prev_sim<upr[l])
+        if (length(wh)>0) {
+          f[locs,wh]<-rowSums(prevalence_map$data[locs,,drop=FALSE]>=lwr[l] & prevalence_map$data[locs,,drop=FALSE]<upr[l])/wdt[l]
+        }
+      }
+    }
+    if (amis_params[["log"]]) {f<-log(f)}
+  }
+  return(f)
+}
+
+#' Compute weight matrix using empirical Radon-Nikodym derivative
+#'
+#' Compute matrix describing the weights for each parameter sampled, for each
+#' location. One row per sample, one column per location.  Each weight
+#' is computed based on the empirical Radon-Nikodym derivative, taking into account
+#' geostatistical prevalence data for the specific location and the prevalence values
+#' computed from the transmission model for the specific parameter sample.
+#'
+#' @param likelihoods An n_sims x n_locs matrix of (log-)likelihoods
+#' NB: transpose of slice of array. 
+#' @param prev_sim A vector containing the simulated prevalence value for each parameter sample.
+#' @param amis_params A list of parameters, e.g. from \code{\link{default_amis_params}}
+#' @param weight_matrix An n_sims x n_locs matrix containing the current values of the weights.
+#' @return An updated weight matrix.
+compute_weight_matrix_empirical <- function(likelihoods, prev_sim, amis_params, weight_matrix) {
+  delta<-amis_params[["delta"]]
+  locs<-which(!is.na(likelihoods[1,])) # if there is no data for a location, do not update weights.
+  new_weights<-matrix(NA,length(prev_sim),length(likelihoods[1,]))
+  for (i in 1:length(prev_sim)) {
+    wh<-which(abs(prev_sim-prev_sim[i])<=delta/2)
+    g_terms<-weight_matrix[wh,locs,drop=FALSE]
+    if (amis_params[["log"]]) {
+      M<-apply(g_terms,2,max)
+      non_zero_locs<-locs[which(M>-Inf)]
+      zero_locs<-setdiff(locs,non_zero_locs)
+      if (length(zero_locs)>0) {
+        cat("zero for ",i,"\n")
+        weight_matrix[i,zero_locs]<--Inf
+      }
+      M<-M[which(M>-Inf)]
+      new_weights[i,non_zero_locs]<-weight_matrix[i,non_zero_locs]+likelihoods[i,non_zero_locs]-M-log(colSums(exp(g_terms-rep(M,each=length(wh)))))+log(delta)
+    } else {
+      g<-colSums(g_terms)
+      non_zero_locs<-locs[which(g>0)]
+      g<-g[which(g>0)]
+      new_weights[i,non_zero_locs]<-weight_matrix[i,non_zero_locs]*likelihoods[i,non_zero_locs]/g*delta
+    }  
+  }
+  return(new_weights)
+}
+
+#' Compute weight matrix using empirical Radon-Nikodym derivative (with fixed breaks)
+#'
+#' Compute matrix describing the weights for each parameter sampled, for each
+#' location. One row per sample, one column per location.  Each weight
+#' is computed based on the empirical Radon-Nikodym derivative, taking into account
+#' geostatistical prevalence data for the specific location and the prevalence value
+#' computed from the transmission model for the specific parameter sample.
+#'
+#' @param likelihoods An n_sims x n_locs matrix of (log-)likelihoods
+#' NB: transpose of slice of array.
+#' @param prev_sim A vector containing the simulated prevalence value for each
+#'     parameter sample. (double)
+#' @param amis_params A list of parameters, e.g. from \code{\link{default_amis_params}}
+#'
+#' @param weight_matrix A matrix containing the current values of the weights.
+#' @return An updated weight matrix.
+compute_weight_matrix_histogram<-function(likelihoods, prev_sim, amis_params, weight_matrix) {
+  breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence. 
+  L<-length(breaks)
+  lwr<-breaks[1:(L-1)]
+  upr<-breaks[2:L]
+  wdt<-upr-lwr
+  locs<-which(!is.na(likelihoods[1,])) # if there is no data for a location, do not update weights.
+  new_weights<-matrix(ifelse(amis_params[["log"]],-Inf,0),length(prev_sim),length(likelihoods[1,]))
+  for (l in 1:L) {
+    wh<-which(prev_sim>=lwr[l] & prev_sim<upr[l])
+    if (length(wh)>0) {
+      g_terms<-weight_matrix[wh,locs,drop=FALSE]
+      if (amis_params[["log"]]) {
+        M<-apply(g_terms,2,max)
+        non_zero_locs<-locs[which(M>-Inf)]
+        M<-M[which(M>-Inf)]
+        new_weights[wh,non_zero_locs]<-weight_matrix[wh,non_zero_locs]+likelihoods[wh,non_zero_locs]-rep(M+log(colSums(exp(g_terms-M))),each=length(wh))+log(wdt[l])
+      } else {
+        g<-colSums(g_terms)
+        non_zero_locs<-locs[which(g>0)]
+        g<-g[which(g>0)]
+        new_weights[wh,non_zero_locs]<-weight_matrix[wh,non_zero_locs]*likelihoods[wh,non_zero_locs]/rep(g,each=length(wh))*wdt[l]
+      } 
+    }
+  }
+  return(new_weights)
+}
+
+#' Compute weight matrix across timepoints using appropriate method
+#' 
+#' Wrapper function to select appropriate method to calculate weight matrix.
 #' @param prevalence_map A list with one entry for each timepoint.
 #' Each entry is a list containing objects \code{data} (an L x M matrix of data); \code{likelihood} a function taking a row of data and the output from the transmission
 #' model as arguments (and logical \code{log}) and returning the (log)-likelihood. If a likelihood is not specified then it is assumed that
@@ -10,28 +176,30 @@
 #' @param amis_params A list of parameters, e.g. from \code{\link{default_amis_params}}.
 #' @param first_weight A vector containing the values for the right hand side of
 #'     the weight expression. Should be of the same length as the rows in \code{simulated_prevalence}.
-compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_params, first_weight) {
-  timepoints<-length(prevalence_map)
+#' @return normalised weight matrix.
+compute_weight_matrix_old <- function(prevalence_map, simulated_prevalence, amis_params, first_weight) {
+  n_tims<-length(prevalence_map)
   n_locs <- dim(prevalence_map[[1]]$data)[1]
   n_sims <- dim(simulated_prevalence)[1]
   weight_matrix <- matrix(rep(first_weight,n_locs), nrow = n_sims, ncol = n_locs)
-  for (t in 1:timepoints) {
+  for (t in 1:n_tims) {
     # Update the weights by the latest likelihood (filtering)
     if (is.null(amis_params[["breaks"]])) {
-      weight_matrix <- compute_weight_matrix_empirical(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
+      weight_matrix <- compute_weight_matrix_empirical_old(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
     } else {
-      weight_matrix <- compute_weight_matrix_histogram(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
+      weight_matrix <- compute_weight_matrix_histogram_old(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
     }
   }
+  browser()
   # renormalise weights
   if (amis_params[["log"]]) {
     M<-apply(weight_matrix,2,max)
     wh<-which(M>-Inf)
-    weight_matrix[,wh]<-weight_matrix[,wh]-M[wh]-log(colSums(exp(weight_matrix[,wh]-rep(M,each=n_sims))))
+    weight_matrix[,wh]<-weight_matrix[,wh]-rep(M[wh]+log(colSums(exp(weight_matrix[,wh,drop=FALSE]-rep(M[wh],each=n_sims)))),each=n_sims)
   } else {
     S<-colSums(weight_matrix)
     wh<-which(S>0)
-    weight_matrix[,wh]<-weight_matrix[,wh]/S[wh]
+    weight_matrix[,wh]<-weight_matrix[,wh]/rep(S[wh],each=n_sims)
   }
   return(weight_matrix)
 }
@@ -51,8 +219,8 @@ compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_par
 #' @param amis_params A list of parameters, e.g. from \code{\link{default_amis_params}}
 #' @param weight_matrix A matrix containing the current values of the weights.
 #' @return An updated weight matrix.
-compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_params, weight_matrix) {
-  delta<-amis_params[["delta"]]
+compute_weight_matrix_empirical_old <- function(prevalence_map, prev_sim, amis_params, weight_matrix) {
+  delta<-amis_params[["delta"]]/2 # dividing by 2 here saves a lot of dividing by 2.
   # define function to calculate empirical RN derivative from Touloupou, Retkute, Hollingsworth and Spencer (2020)
   radon_niko_deriv <- function(idx, prev_data_for_IU, weight_vector, log=amis_params[["log"]]) {
     if (is.null(prevalence_map$likelihood)) {
@@ -100,7 +268,7 @@ compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_param
 #'
 #' @param weight_matrix A matrix containing the current values of the weights.
 #' @return An updated weight matrix.
-compute_weight_matrix_histogram<-function(prevalence_map, prev_sim, amis_params, weight_matrix) {
+compute_weight_matrix_histogram_old<-function(prevalence_map, prev_sim, amis_params, weight_matrix) {
   breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence. 
   if (min(breaks)>0) {breaks<-c(0,breaks)}
   if (min(prev_sim)<min(breaks)) {breaks<-c(min(prev_sim),breaks)}
@@ -148,6 +316,34 @@ compute_weight_matrix_histogram<-function(prevalence_map, prev_sim, amis_params,
 #'
 #' @seealso \code{\link{compute_weight_matrix}}
 calculate_ess <- function(weight_mat,log) {
+  ess<-rep(0,dim(weight_mat)[2])
+  if (log) {
+    M<-apply(weight_mat,2,max)
+    wh<-which(M>-Inf)
+    M<-M[wh]
+    ess[wh]<-exp(-2*M)*colSums(exp(2*(weight_mat[,wh,drop=FALSE]-rep(M,each=dim(weight_mat)[1]))))^(-1)
+  } else {
+    S<-colSums(weight_mat^2)
+    wh<-which(S>0)
+    ess[wh]<-1/S[wh]
+  }
+  return(ess)
+}
+
+#' Compute the current effective sample size
+#'
+#' This function returns the effective sample size (ESS) for each location. 
+#'  For each column of the weight matrix \code{weight_mat}, the ESS component is computed as
+#' \deqn{(\sum_{i=1}^{N} w_{i}^2 )^{-1}}
+#' where \eqn{N} is the number of sampled parameter values for each location.
+#'
+#' @param weight_mat The weight matrix. A N x L matrix with L the number of locations
+#'     and N the number of sampled parameter values.
+#' @param log logical indicating if the weights are on the log scale. 
+#' @return A vector containing the ESS value for each location.
+#'
+#' @seealso \code{\link{compute_weight_matrix}}
+calculate_ess_old <- function(weight_mat,log) {
   if (log) {
     ess_for_IU <- function(weights_for_IU) {
       M <- max(weights_for_IU)
@@ -168,6 +364,7 @@ calculate_ess <- function(weight_mat,log) {
   }
   return(apply(weight_mat, 2, ess_for_IU))
 }
+
 #' Calculate sum of weight matrix for active locations
 #'
 #' This function sums the rows of the weight matrix \code{weight_matrix} for which
@@ -186,7 +383,7 @@ update_according_to_ess_value <- function(weight_matrix, ess, target_size,log) {
     M<-apply(weight_matrix[,active_cols,drop=FALSE],1,max)
     wh<-which(M==-Inf)
     M[wh]<-0
-    return(M+log(rowSums(exp(weight_matrix[,active_cols,drop=FALSE]-rep(M,length(active_cols))))))
+    return(M+log(rowSums(exp(weight_matrix[,active_cols,drop=FALSE]-M))))
   } else {
     return(rowSums(weight_matrix[,active_cols,drop=FALSE]))
   }
