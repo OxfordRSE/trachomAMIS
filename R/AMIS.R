@@ -41,7 +41,6 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   prior_density<-sapply(1:nsamples,function(b) {prior$dprior(param[b,],log=amis_params[["log"]])})
   # Simulate from transmission model
   simulated_prevalences <- transmission_model(seeds = 1:nsamples, param)
-  # add failsafe to poor breaks here?
   # to avoid duplication, evaluate likelihood now.
   likelihoods<- compute_likelihood(prevalence_map,simulated_prevalences,amis_params)
   weight_matrix <- compute_weight_matrix(
@@ -50,7 +49,6 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     amis_params,
     first_weight = rep(1-amis_params[["log"]], nsamples)
   )
-  #weight_matrix_check <- compute_weight_matrix_old(prevalence_map,simulated_prevalences,amis_params,rep(1-amis_params[["log"]], nsamples))
   ess <- calculate_ess(weight_matrix,amis_params[["log"]])
   # Make object to store the components of the AMIS mixture.
   components <- list(
@@ -70,7 +68,6 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     param <- rbind(param, new_params$params)
     prior_density <- c(prior_density,new_params$prior_density)
     new_prevalences <- transmission_model(seeds(t), new_params$params)
-    # add failsafe to poor breaks here?
     simulated_prevalences <- rbind(simulated_prevalences,new_prevalences)
     likelihoods <- compute_likelihood(prevalence_map,new_prevalences,amis_params,likelihoods)
     first_weight <- compute_prior_proposal_ratio(components, param, prior_density, amis_params[["df"]], amis_params[["log"]]) # Prior/proposal

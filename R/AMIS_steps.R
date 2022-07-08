@@ -96,18 +96,13 @@ evaluate_likelihood<-function(prevalence_map,prev_sim,amis_params) {
 compute_weight_matrix_empirical <- function(likelihoods, prev_sim, amis_params, weight_matrix) {
   delta<-amis_params[["delta"]]
   locs<-which(!is.na(likelihoods[1,])) # if there is no data for a location, do not update weights.
-  new_weights<-matrix(NA,length(prev_sim),length(likelihoods[1,]))
+  new_weights<-matrix(ifelse(amis_params[["log"]],-Inf,0),length(prev_sim),length(likelihoods[1,]))
   for (i in 1:length(prev_sim)) {
     wh<-which(abs(prev_sim-prev_sim[i])<=delta/2)
     g_terms<-weight_matrix[wh,locs,drop=FALSE]
     if (amis_params[["log"]]) {
       M<-apply(g_terms,2,max)
       non_zero_locs<-locs[which(M>-Inf)]
-      zero_locs<-setdiff(locs,non_zero_locs)
-      if (length(zero_locs)>0) {
-        cat("zero for ",i,"\n")
-        weight_matrix[i,zero_locs]<--Inf
-      }
       M<-M[which(M>-Inf)]
       new_weights[i,non_zero_locs]<-weight_matrix[i,non_zero_locs]+likelihoods[i,non_zero_locs]-M-log(colSums(exp(g_terms-rep(M,each=length(wh)))))+log(delta)
     } else {
@@ -490,6 +485,7 @@ update_mixture_components <- function(mixture, components, t) {
   }
   return(components)
 }
+
 #' Compute the prior/proposal ratio
 #'
 #' This function returns the ratio between the prior and proposal distribution
@@ -517,6 +513,53 @@ update_mixture_components <- function(mixture, components, t) {
 #' @return A vector containing the prior/proposal ratio for each row in
 #'     \code{param}
 compute_prior_proposal_ratio <- function(components, param, prior_density, df, log) {
+  probs <- components$probs # /sum(unlist(components$probs)) # to normalise?
+  Sigma <- components$Sigma
+  Mean <- components$Mean
+  G <- sum(components$G)
+  q_terms<-matrix(NA,nrow(param),G)
+  for (g in 1:G) {
+    if (log) {
+      q_terms[,g]<-log(probs[[g]])+mnormt::dmt(param,mean=Mean[[g]],S=Sigma[[g]],df=df,log=T)
+    } else {
+      q_terms[,g]<-probs[[g]]*mnormt::dmt(param,mean=Mean[[g]],S=Sigma[[g]],df=df,log=F)
+    }
+  }
+  if (log) {
+    M<-pmax(apply(q_terms,1,max),prior_density)
+    return(prior_density - M - log(rowSums(exp(q_terms-M))+exp(prior_density-M)))
+  } else {
+    return(prior_density/(rowSums(q_terms)+prior_density))
+  }
+}
+
+#' Compute the prior/proposal ratio
+#'
+#' This function returns the ratio between the prior and proposal distribution
+#' for each sampled parameter value (i.e. each row in \code{param}).
+#' This function returns the first weight
+#' See step (4) of the AMIS algorithm in
+#' Integrating Geostatistical Maps And Transmission Models Using Adaptive
+#' Multiple Importance Sampling
+#' Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez,
+#' T. Deirdre Hollingsworth, Simon E.F. Spencer
+#' medRxiv 2020.08.03.20146241;
+#' doi: https://doi.org/10.1101/2020.08.03.20146241
+#'
+#' @param components A list of mixture components made of
+#'     \describe{
+#'       \item{\code{G}}{A numeric vector containing the number of components from each AMIS iteration}
+#'       \item{\code{Sigma}}{A list of covariace matrices from each component}
+#'       \item{\code{Mean}}{A list of means from each component}
+#'       \item{\code{probs}}{A list of probability weights for each component (unnormalised)}
+#'     }
+#' @param param A matrix containing the sampled parameter vectors.
+#' @param prior_density Vector containing the prior density of each sampled parameter vector.
+#' @param df The degrees of freedom for the t-distributed proposal distribution.
+#' @param log A logical indicating whether to work on the log scale.
+#' @return A vector containing the prior/proposal ratio for each row in
+#'     \code{param}
+compute_prior_proposal_ratio_old <- function(components, param, prior_density, df, log) {
   probs <- components$probs # /sum(unlist(components$probs)) # to normalise?
   Sigma <- components$Sigma
   Mean <- components$Mean
