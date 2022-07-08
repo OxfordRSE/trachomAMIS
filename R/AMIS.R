@@ -39,13 +39,17 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   # to avoid duplication, evaluate prior density now.
   prior_density<-sapply(1:nsamples,function(b) {prior$dprior(param[b,],log=amis_params[["log"]])})
   # Simulate from transmission model
-  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param) 
+  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param)
+  # add failsafe to poor breaks here?
+  # to avoid duplication, evaluate likelihood now.
+  likelihoods<- compute_likelihood(prevalence_map,simulated_prevalences,amis_params)
   weight_matrix <- compute_weight_matrix(
-    prevalence_map,
+    likelihoods,
     simulated_prevalences,
     amis_params,
     first_weight = rep(1-amis_params[["log"]], nsamples)
   )
+  #weight_matrix_check <- compute_weight_matrix_old(prevalence_map,simulated_prevalences,amis_params,rep(1-amis_params[["log"]], nsamples))
   ess <- calculate_ess(weight_matrix,amis_params[["log"]])
   # Make object to store the components of the AMIS mixture.
   components <- list(
@@ -60,13 +64,16 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     print(sprintf("AMIS iteration %g", t))
     mean_weights <- update_according_to_ess_value(weight_matrix, ess, amis_params[["target_ess"]],amis_params[["log"]])
     mixture <- weighted_mixture(param, amis_params[["mixture_samples"]], mean_weights, amis_params[["log"]])
-    new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
-    simulated_prevalences <- rbind(simulated_prevalences,transmission_model(seeds(t), new_params$params))
     components <- update_mixture_components(mixture, components, t)
+    new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
     param <- rbind(param, new_params$params)
     prior_density <- c(prior_density,new_params$prior_density)
+    new_prevalences <- transmission_model(seeds(t), new_params$params)
+    # add failsafe to poor breaks here?
+    simulated_prevalences <- rbind(simulated_prevalences,new_prevalences)
+    likelihoods <- compute_likelihood(prevalence_map,new_prevalences,amis_params,likelihoods)
     first_weight <- compute_prior_proposal_ratio(components, param, prior_density, amis_params[["df"]], amis_params[["log"]]) # Prior/proposal
-    weight_matrix <- compute_weight_matrix(prevalence_map, simulated_prevalences, amis_params, first_weight) # RN derivative (shd take all amis_params)
+    weight_matrix <- compute_weight_matrix(likelihoods, simulated_prevalences, amis_params, first_weight) # RN derivative (shd take all amis_params)
     ess <- calculate_ess(weight_matrix,amis_params[["log"]])
     niter <- niter + 1
     if (min(ess) >= amis_params[["target_ess"]]) break
