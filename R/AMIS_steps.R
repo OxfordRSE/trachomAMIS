@@ -8,7 +8,6 @@ default_amis_params <- function(histogram=FALSE) {
   return(amis_params)
 }
 
-
 #' Compute likelihood for each additional simulation across timepoints
 #'
 #' Calls evaluate likelihood for each timepoint.
@@ -348,12 +347,12 @@ update_mixture_components <- function(mixture, components, t) {
 #' for each sampled parameter value (i.e. each row in \code{param}).
 #' This function returns the first weight
 #' See step (4) of the AMIS algorithm in
-#' Integrating Geostatistical Maps And Transmission Models Using Adaptive
-#' Multiple Importance Sampling
+#' Integrating geostatistical maps and infectious disease transmission models 
+#' using adaptive multiple importance sampling.
 #' Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez,
 #' T. Deirdre Hollingsworth, Simon E.F. Spencer
-#' medRxiv 2020.08.03.20146241;
-#' doi: https://doi.org/10.1101/2020.08.03.20146241
+#' Ann. Appl. Stat. 15 (4) 1980 - 1998, December 2021.
+#' DOI: https://doi.org/10.1214/21-AOAS1486
 #'
 #' @param components A list of mixture components made of
 #'     \describe{

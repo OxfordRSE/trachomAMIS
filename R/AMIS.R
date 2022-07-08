@@ -1,4 +1,12 @@
 #' Run the AMIS algorithm to fit a transmission model to a map
+#' 
+#' For details of the algorithm, see 
+#' Integrating geostatistical maps and infectious disease transmission models 
+#' using adaptive multiple importance sampling.
+#' Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez,
+#' T. Deirdre Hollingsworth, Simon E.F. Spencer
+#' Ann. Appl. Stat. 15 (4) 1980 - 1998, December 2021.
+#' DOI: https://doi.org/10.1214/21-AOAS1486
 #'
 #' @param prevalence_map An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
 #' The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with one entry for each timepoint.
