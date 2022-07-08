@@ -3,9 +3,9 @@
 This package provides an implementation of the Adaptive Multiple
 Importance Sampling algorithm, as described in 
 
-_Integrating Geostatistical Maps And Transmission Models Using Adaptive Multiple Importance Sampling_
-Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez, T. Deirdre Hollingsworth, Simon E.F. Spencer
-medRxiv 2020.08.03.20146241; doi: https://doi.org/10.1101/2020.08.03.20146241 
+_IIntegrating geostatistical maps and infectious disease transmission models using adaptive multiple importance sampling._
+Renata Retkute, Panayiota Touloupou, María-Gloria Basáñez, T. Deirdre Hollingsworth and Simon E.F. Spencer (2021).
+Annals of Applied Statistics, 15 (4), 1980-1998. DOI https://doi.org/10.1214/21-AOAS1486 
 
 # Installation
 
