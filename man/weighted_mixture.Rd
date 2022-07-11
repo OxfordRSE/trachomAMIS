@@ -7,12 +7,11 @@
 weighted_mixture(parameters, nsamples, weights, log = F)
 }
 \arguments{
-\item{parameters}{A matrix m x d matrix containing the sampled values for the
-d parameters.}
+\item{parameters}{An N x d matrix containing the sampled values for the d parameters.}
 
 \item{nsamples}{The number of parameter to resample as data to fit the mixture to.}
 
-\item{weights}{A vector of weights}
+\item{weights}{A vector of weights with length N.}
 
 \item{log}{logical indicating if weights are logged.}
 }

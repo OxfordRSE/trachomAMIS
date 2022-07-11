@@ -2,15 +2,21 @@
 % Please edit documentation in R/AMIS.R
 \name{amis}
 \alias{amis}
-\title{Run the AMIS algorithm to fit the transmission model to the map}
+\title{Run the AMIS algorithm to fit a transmission model to a map}
 \usage{
 amis(prevalence_map, transmission_model, prior, amis_params, seed = NULL)
 }
 \arguments{
-\item{prevalence_map}{An L x M matrix containing samples from the prevalence map, where L is the number of locations and M the number of samples.
-The location names are inherited from \code{rownames(prevalence_map)} if possible.}
+\item{prevalence_map}{An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
+The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with one entry for each timepoint.
+Each entry must be a list containing objects \code{data} (an L x M matrix of data as above);
+and \code{likelihood} a function taking arguments \code{data} (a matrix of data as above),
+\code{prevalence} (a matrix of output from the transmission model) and optional logical \code{log}, which returns the vector of (log)-likelihoods.
+If a likelihood is not specified then it is assumed that
+the data consist of samples from a geo-statistical model and empirical methods are used.}
 
-\item{transmission_model}{A function taking a vector of seeds and a matrix of parameter vectors as inputs.}
+\item{transmission_model}{A function taking a vector of n seeds and an n x d matrix of parameter vectors as inputs
+and producing a n x timepoints MATRIX of prevalences as output (it must be a matrix even when timepoints==1).}
 
 \item{prior}{A list containing the functions \code{dprior} and \code{rprior} (density and RNG).
 \code{rprior} must produce an n by d MATRIX of parameters, even when d=1.
@@ -23,16 +29,22 @@ parameter names are inherited from the \code{colnames} from the output of \code{
 \item{\code{mixture_samples}the number of samples used to represent the weighted parameters in the mixture fitting.}
 \item{\code{df}the degrees of freedom in the t-distributions, used to yield a heavy tailed proposal.}
 \item{\code{target_ess}the target effective sample size.}
-\item{\code{log} logicalindicating if calculations are to be performed on log scale.}
+\item{\code{log} logical indicating if calculations are to be performed on log scale.}
 \item{\code{max_iters}maximum number of AMIS iterations.}
+\item{\code{breaks}optional vector specifying the breaks for the histogram.}
 }}
 
 \item{seed}{Optional seed for the random number generator}
 }
 \value{
-A list containing a dataframe of the sampled parameters, simulation seed, and weight in each location, plus a vector
-#' called ess containing the obtained ess at each location.
+A dataframe of the sampled parameters, simulation seed, and weight in each location.
 }
 \description{
-Run the AMIS algorithm to fit the transmission model to the map
+For details of the algorithm, see
+Integrating geostatistical maps and infectious disease transmission models
+using adaptive multiple importance sampling.
+Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez,
+T. Deirdre Hollingsworth, Simon E.F. Spencer
+Ann. Appl. Stat. 15 (4) 1980 - 1998, December 2021.
+DOI: https://doi.org/10.1214/21-AOAS1486
 }

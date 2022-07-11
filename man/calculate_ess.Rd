@@ -7,20 +7,19 @@
 calculate_ess(weight_mat, log)
 }
 \arguments{
-\item{weight_mat}{The weight matrix. A n x m matrix with n the number of IUS
-and m the number of sampled parameter values.}
+\item{weight_mat}{The weight matrix. A N x L matrix with L the number of locations
+and N the number of sampled parameter values.}
 
 \item{log}{logical indicating if the weights are on the log scale.}
 }
 \value{
-A vector containing the ESS value for each IU.
+A vector containing the ESS value for each location.
 }
 \description{
-This function returns the effective sample size (ESS) for each Implementation
-Unit (IU). For each column of the weight matrix \code{weight_mat}, the ESS component
-is computed as
+This function returns the effective sample size (ESS) for each location.
+For each column of the weight matrix \code{weight_mat}, the ESS component is computed as
 \deqn{(\sum_{i=1}^{N} w_{i}^2 )^{-1}}
-where \eqn{N} is the number of sampled parameter values for each IU.
+where \eqn{N} is the number of sampled parameter values for each location.
 }
 \seealso{
 \code{\link{compute_weight_matrix}}
