@@ -33,21 +33,34 @@ write_model_input <- function(seeds, beta, input_file) {
 #' @param delta A number. (double)
 #' @param first_weight A vector containing the values for the right hand side of
 #'     the weight expression. Should be of the same length as \code{prev_sim}.
-compute_weight_matrix <- function(prev_data, prev_sim, delta, first_weight) {
+# SS note: make alternative versions of this function for other ERN derivatives.
+compute_weight_matrix <- function(prev_data, prev_sim, amis_params, first_weight) {
   n_IUs <- dim(prev_data)[1]
   weight_mat <- matrix(NA, nrow = n_IUs, ncol = length(prev_sim))
-
-  radon_niko_deriv <- function(idx, prev_data_for_IU) {
+  delta<-amis_params[["delta"]]
+  # define function to calculate empirical RN derivative from Touloupou, Retkute, Hollingsworth and Spencer (2020)
+  radon_niko_deriv <- function(idx, prev_data_for_IU, log=amis_params[["log"]]) {
     f <- length(which((prev_data_for_IU > prev_sim[idx] - delta / 2) & (prev_data_for_IU <= prev_sim[idx] + delta / 2)))
-    g <- sum(first_weight[which((prev_sim > prev_sim[idx] - delta / 2) & (prev_sim <= prev_sim[idx] + delta / 2))])
-
-    return(f / g)
+    g_terms <- first_weight[which((prev_sim > prev_sim[idx] - delta / 2) & (prev_sim <= prev_sim[idx] + delta / 2))]
+    if (log) {
+      M<-max(g_terms)
+      return(log(f)-M-log(sum(exp(g_terms-M))))
+    } else {
+      return(f/sum(g_terms))
+    }
   }
-
   for (i in 1:n_IUs) {
     w <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data[i, ])
-    w <- w * first_weight
-    if (sum(w) > 0) w <- w / sum(w)
+    if (amis_params[["log"]]) {
+      w <- w + first_weight
+      M<-max(w)
+      S<-M+log(sum(exp(w-M)))
+      if (S>-Inf) {w <- w - S}
+    } else {
+      w <- w * first_weight
+      if (sum(w) > 0) {w <- w / sum(w)}
+      # NB it doesn't matter if all the simulations have weight zero in an early iteration, as long as this is not true for all active IUs.
+    }
     weight_mat[i, ] <- w
   }
   return(weight_mat)
