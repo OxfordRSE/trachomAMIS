@@ -78,22 +78,30 @@ compute_weight_matrix <- function(prev_data, prev_sim, amis_params, first_weight
 #'
 #' @param weight_mat The weight matrix. A n x m matrix with n the number of IUS
 #'     and m the number of sampled parameter values.
+#' @param log logical indicating if the weights are on the log scale. 
 #' @return A vector containing the ESS value for each IU.
 #'
 #' @seealso \code{\link{compute_weight_matrix}}
-calculate_ess <- function(weight_mat) {
-  ess_for_IU <- function(weights_for_IU) {
-    if (sum(weights_for_IU) == 0) {
-      return(0)
+calculate_ess <- function(weight_mat,log) {
+  if (log) {
+    ess_for_IU <- function(weights_for_IU) {
+      M <- max(weights_for_IU)
+      if (M == -Inf) {
+        return(0)
+      } else {
+        return((exp(2*M)*sum(exp(2*(weights_for_IU-M))))^(-1))
+      }
     }
-    return(
-      (sum((weights_for_IU)^2))^(-1)
-    )
+  } else {
+    ess_for_IU <- function(weights_for_IU) {
+      if (sum(weights_for_IU) == 0) {
+        return(0)
+      } else {
+        return(sum(weights_for_IU^2)^(-1))
+      }
+    }
   }
-
-  return(
-    apply(weight_mat, 1, ess_for_IU)
-  )
+  return(apply(weight_mat, 1, ess_for_IU))
 }
 
 #' Update weight matrix

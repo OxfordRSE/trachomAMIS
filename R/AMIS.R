@@ -15,7 +15,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     amis_params,
     first_weight = rep(1-amis_params[["log"]], nsamples)
   )
-  ess <- calculate_ess(WW)
+  ess <- calculate_ess(weight_matrix,amis_params[["log"]])
   components <- list(
     GG = c(0),
     Sigma = list(),
