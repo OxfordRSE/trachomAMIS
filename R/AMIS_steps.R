@@ -2,28 +2,6 @@ dprop0 <- function(x) {
   return(dunif(x[1], min = 0.05, max = 0.175) * dunif(x[2], min = 0, max = 1))
 }
 
-#' Sample initial parameters from prior
-#'
-#' Sample N initial values for two parameters, uniformly distributed
-#' between MIN and MAX.
-#'
-#' @param n The number of samples to draw for each parameter.
-#' @param min The lower bound for the uniform distribution.
-#' @param max The upper bound for the uniform distribution.
-#' @return A Nx2 matrix
-#' @examples
-#' get_initial_parameters(100, 0.05, 0.175)
-get_initial_parameters <- function(n) {
-  ## Samples initial parameter from uniform distrib (prior)
-  init_beta_samples <- runif(n, min = 0.05, max = 0.175)
-  init_constant_samples <- runif(n, min = 0, max = 1)
-  return(
-    matrix(c(init_beta_samples, init_constant_samples),
-      ncol = 2
-    )
-  )
-}
-
 #' Write input file required by transmission model
 #'
 #' Write a 2 columns csv file named INPUT_FILE to disk. The first column SEEDS

@@ -1,11 +1,13 @@
 #' @export
-amis <- function(prevalence_map, transmission_model, amis_params, seed = NULL) {
-
+amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = NULL) {
   if(!is.null(seed)) set.seed(seed)
-
   nsamples <- amis_params[["nsamples"]]
   print("AMIS iteration 1")
-  param <- get_initial_parameters(nsamples)
+  # Sample first set of parameters from the prior
+  param <- prior$rprior(nsamples)
+  # to avoid duplication, evaluate prior density now.
+  prior_density<-sapply(1:nsamples,function(b) {prior$dprior(param[b,],log=amis_params[["log"]])})
+  # Simulate from transmission model
   simulated_prevalences <- transmission_model(seeds = 1:nsamples, param[,1])
   WW <- compute_weight_matrix(
     prevalence_map,
