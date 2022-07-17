@@ -245,14 +245,24 @@ update_mixture_components <- function(mixture, components, t) {
 #' @param param A matrix containing the sampled parameter vectors.
 #' @param prior_density Vector containing the prior density of each sampled parameter vector.
 #' @param df The degrees of freedom for the t-distributed proposal distribution.
+#' @param log A logical indicating whether to work on the log scale.
 #' @return A vector contaning the prior/proposal ratio for each row in
 #'     \code{param}
-compute_prior_proposal_ratio <- function(components, param, prior_density, df) {
+compute_prior_proposal_ratio <- function(components, param, prior_density, df, log) {
   probs <- components$probs # /sum(unlist(components$probs)) # to normalise?
   Sigma <- components$Sigma
   Mean <- components$Mean
   G <- sum(components$G)
-  prop.val <- sapply(1:nrow(param), function(b) {sum(sapply(1:G, function(g) {probs[[g]]*mnormt::dmt(param[b, ], mean = Mean[[g]], S = Sigma[[g]],df=df)})) + prior_density[b]}) # Assumes number of points is equal in each iteration.
-  first_weight <- prior_density/prop.val # prior/proposal
+  if (log) {
+    prop.val <- sapply(1:nrow(param), function(b) {
+      component_densities <- sapply(1:G, function(g) {log(probs[[g]])+mnormt::dmt(param[b, ], mean = Mean[[g]], S = Sigma[[g]],df=df,log=T)})
+      M <- max(component_densities,prior_density[b])
+      return(M+log(sum(exp(component_densities-M))+exp(prior_density[b]-M)))
+    }) # Assumes number of points is equal in each iteration.
+    first_weight <- prior_density - prop.val # prior/proposal
+  } else {
+    prop.val <- sapply(1:nrow(param), function(b) {sum(sapply(1:G, function(g) {probs[[g]]*mnormt::dmt(param[b, ], mean = Mean[[g]], S = Sigma[[g]],df=df)})) + prior_density[b]}) # Assumes number of points is equal in each iteration.
+    first_weight <- prior_density/prop.val # prior/proposal
+  }
   return(first_weight)
 }

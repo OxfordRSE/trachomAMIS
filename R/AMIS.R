@@ -36,7 +36,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     components <- update_mixture_components(mixture, components, t)
     param <- rbind(param, new_params$params)
     prior_density <- c(prior_density,new_params$prior_density)
-    first_weight <- compute_prior_proposal_ratio(components, param, prior_density, amis_params[["df"]]) # Prior/proposal
+    first_weight <- compute_prior_proposal_ratio(components, param, prior_density, amis_params[["df"]], amis_params[["log"]]) # Prior/proposal
     weight_matrix <- compute_weight_matrix(prevalence_map, simulated_prevalences, amis_params, first_weight) # RN derivative (shd take all amis_params)
     ess <- calculate_ess(weight_matrix,amis_params[["log"]])
     niter <- niter + 1
