@@ -1,18 +1,3 @@
-#' Write input file required by transmission model
-#'
-#' Write a 2 columns csv file named INPUT_FILE to disk. The first column SEEDS
-#' contains the seed for each parameter value. Second column BETA contains
-#' corresponding parameter values.
-#'
-#' @param seeds A vector containing seed value for each parameter sample
-#'     (double)
-#' @param beta A vector containing samples of the beta parameter (double)
-#' @param input_file The name of the input file (string)
-write_model_input <- function(seeds, beta, input_file) {
-  input_params <- cbind(seeds, beta)
-  colnames(input_params) <- c("randomgen", "bet")
-  write.csv(input_params, file = input_file, row.names = FALSE)
-}
 #' Compute weight matrix
 #'
 #' Compute matrix describing the weights for each parameter sampled, for each
