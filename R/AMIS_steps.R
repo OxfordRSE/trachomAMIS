@@ -103,85 +103,97 @@ calculate_ess <- function(weight_mat,log) {
   }
   return(apply(weight_mat, 1, ess_for_IU))
 }
-
-#' Update weight matrix
+#' Calculate sum of weight matrix for active locations
 #'
-#' This function sets to 0 the rows of the weight matrix WEIGHT_MATRIX for which
-#' the effective sample size ESS is above a target size TARGET_SIZE.
+#' This function sums the rows of the weight matrix WEIGHT_MATRIX for which
+#' the effective sample size ESS is below a target size TARGET_SIZE.
 #'
 #' @param weight_matrix The weight_matrix as returned by
 #'     \link{compute_weight_matrix}
 #' @param ess The effective sample size vector as returned by
 #'     \link{calculate_ess}
 #' @param target_size A number representing the target size for the sample.
+#' @param log A logical indicating if the weights are logged.
 #' @return The updated weight matrix. Its size is unchanged.
-update_according_to_ess_value <- function(weight_matrix, ess, target_size) {
-  rows_to_nullify <- which(ess >= target_size)
-  weight_matrix[rows_to_nullify, ] <- 0
-  return(weight_matrix)
+update_according_to_ess_value <- function(weight_matrix, ess, target_size,log) {
+  active_rows <- which(ess < target_size)
+  if (log) {
+    M<-apply(weight_matrix[active_rows,,drop=FALSE],2,max)
+    return(M+log(colSums(exp(weight_matrix[active_rows,,drop=FALSE]-rep(M,each=length(active_rows))))))
+  } else {
+    return(colSums(weight_matrix[active_rows,,drop=FALSE]))
+  }
 }
-
-#' Evaluate the mixture function as returned by \link{mclustMix}
-#'
-#' Evaluate the mixture function MIXTURE for an subset of NSAMPLES parameters
-#' values sampled according to the weight matrix WEIGHT_MATRIX.
-#' @param parameters A matrix m x 2 matrix containing the sampled values for the
-#'     2 parameters.
-#' @param nsamples The size of the parameter subset to evaluate the mixture
-#'     function from (integer)
-#' @param weight_matrix The weight_matrix as returned by \link{compute_weight_matrix}
-#' @param mixture The mixture function as returned by function \link{mclustMix}
-#' @return A list of the mixture components (see function \code{\link{mclustMix}})
+#' Systematic resampling function
+#' Implement systematic resampling to reduce variance in weighted particle selection
+#' @param nsamples number of samples to draw
+#' @param weights vector of length equal to the number of particles, containing their weights
+#' @param log logical indicating if weights are log-weights
+#' @return vector of indices of the sampled particles 
+systematic_sample <- function(nsamples,weights,log=F) {
+  if (log) {
+    M<-max(weights)
+    log_sum_weights<-M+log(sum(exp(weights-M)))
+    cum <- cumsum(exp(weights-log_sum_weights))
+  } else {
+    cum <- cumsum(weights)/sum(weights) # cumulative sum of normalised weights
+  }
+  u <- runif(1)/nsamples+0:(nsamples-1)/nsamples
+  return(1+matrix(rep(u,length(weights))>rep(cum,each=nsamples),nsamples,length(weights))%*%matrix(1,length(weights),1))
+}
+#' Fit mixture to weighted sample
+#' Weights are implemented by using systematic resampling to obtain an unweighted set of parameters
+#' An unweighted mixture is then fitted using \code{fit_mixture}.
+#' @param parameters A matrix m x d matrix containing the sampled values for the
+#'     d parameters.
+#' @param nsamples The number of parameter to resample as data to fit the mixture to.
+#' @param weights A vector of weights
+#' @param log logical indicating if weights are logged.
+#' @return A list of the mixture components (see function \code{\link{fit_mixture}})
 #'     \describe{
-#'       \item{\code{alpha}}{The probability?}
-#'       \item{\code{muHat}}{The mean?}
-#'       \item{\code{SigmaHat}}{The variance?}
-#'       \item{\code{G}}{??}
-#'       \item{\code{cluster}}{??}
+#'       \item{\code{alpha}}{The mixture weights}
+#'       \item{\code{muHat}}{The means of the components}
+#'       \item{\code{SigmaHat}}{The covariance matrices of the components}
+#'       \item{\code{G}}{Number of components}
+#'       \item{\code{cluster}}{clustering IDs}
 #'     }
 #'
-#' @seealso \code{\link{mclustMix}}
-evaluate_mixture <- function(parameters, nsamples, weight_matrix, mixture) {
-  sampled_idx <- sample(
-    1:dim(parameters)[1],
-    nsamples,
-    prob = colSums(weight_matrix),
-    replace = T
-  )
-  return(
-    mixture(parameters[sampled_idx, ])
-  )
+#' @seealso \code{\link{fit_mixture}}
+weighted_mixture <- function(parameters, nsamples, weights, log=F) {
+  sampled_idx <- systematic_sample(nsamples,weights,log)
+  return(fit_mixture(parameters[sampled_idx, ]))
 }
 
 #' Sample new parameters
 #'
 #' This function generates NSAMPLES new model parameter values according the
-#' proposal distribution RPROP and the mixture components CLUSTMIX.
+#' t distribution with \code{df} degrees of freedom and the mixture components mixture.
 #'
-#' @param clustMix A list of mixture components as returned by
+#' @param mixture A list of mixture components as returned by
 #'     \code{\link{evaluate_mixture}}
-#' @param nsamples A number of new parameters to sample (integer)
-#' @param rprop The proposal distribution as returned by \code{mvtComp()$r}.
-#' @return A NSAMPLES x 2 matrix containing the sampled parameter values.
+#' @param n_samples A number of new parameters to sample (integer)
+#' @param df The degrees of freedom for the t-dsitributed proposal distribution.
+#' @param prior list containing the functions rprior and dprior
+#' @param log A logical indicating if densities 
+#' @return A list containing params, A NSAMPLES x d matrix containing the sampled parameter values and
+#' prior_density, the corresponding vector of prior densities.
 #'
-#' @seealso \code{\link{mvtComp}}
-sample_new_parameters <- function(clustMix, n_samples, rprop) {
-  x <- c()
-  y <- c()
-  while (length(x) < n_samples) {
-    compo <- sample(1:clustMix$G, 1, prob = clustMix$alpha)
-    x1 <- t(
-      rprop(1, clustMix$muHat[compo, ], clustMix$SigmaHat[, , compo])
-    )
-    new.param <- as.numeric(x1)
-    if (dprop0(new.param) > 0) {
-      x <- c(x, new.param[1])
-      y <- c(y, new.param[2])
+#' @seealso \code{\link{fit_mixture}}
+sample_new_parameters <- function(mixture, n_samples, df=3, prior, log) {
+  prior_density<-rep(NA,n_samples) 
+  i<-1
+  while (i <= n_samples) {
+    compo <- sample(1:mixture$G, 1, prob = mixture$probs)
+    proposal <- mnormt::rmt(1,mean=mixture$Mean[,compo],S=mixture$Sigma[,,compo],df=df)
+    density_of_proposal <- prior$dprior(proposal,log=log)
+    if (!is.na(proposal) && ((log && density_of_proposal>-Inf) || (!log && density_of_proposal>0))) {
+      if (i==1) {params<-matrix(NA,n_samples,length(proposal))}
+      params[i,]<-proposal
+      prior_density[i]<-density_of_proposal
+      i<-i+1
     }
   }
-  return(
-    matrix(c(x, y), ncol = 2)
-  )
+  return(list(params=params,prior_density=prior_density))
 }
 
 #' Update the components of the mixture

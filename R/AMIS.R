@@ -9,7 +9,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   prior_density<-sapply(1:nsamples,function(b) {prior$dprior(param[b,],log=amis_params[["log"]])})
   # Simulate from transmission model
   simulated_prevalences <- transmission_model(seeds = 1:nsamples, param[,1])
-  WW <- compute_weight_matrix(
+  weight_matrix <- compute_weight_matrix(
     prevalence_map,
     simulated_prevalences,
     amis_params,
@@ -22,15 +22,13 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     Mean = list(),
     PP = list()
   )
-  prop <- mvtComp(df = 3)
-  mixture <- mclustMix()
   seeds <- function(t) ((t - 1) * nsamples + 1):(t * nsamples)
   niter <- 1
   for (t in 2:amis_params[["T"]]) {
     print(sprintf("AMIS iteration %g", t))
-    WW <- update_according_to_ess_value(WW, ess, amis_params[["target_ess"]])
-    clustMix <- evaluate_mixture(param, nsamples, WW, mixture)
-    new_params <- sample_new_parameters(clustMix, nsamples, prop$r)
+    mean_weights <- update_according_to_ess_value(weight_matrix, ess, amis_params[["target_ess"]],amis_params[["log"]]) 
+    mixture <- weighted_mixture(param, amis_params[["mixture_samples"]], mean_weights, amis_params[["log"]])
+    new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
     simulated_prevalences <- append(
       simulated_prevalences,
       transmission_model(seeds(t), new_params[,1])
