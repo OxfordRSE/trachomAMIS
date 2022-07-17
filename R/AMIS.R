@@ -43,9 +43,9 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     if (min(ess) >= amis_params[["target_ess"]]) break
   }
 
-  if(niter == amis_params[["T"]] && ess <= amis_params[["target_ess"]]) {
+  if(niter == amis_params[["T"]] && min(ess) < amis_params[["target_ess"]]) {
     msg <- sprintf(
-      "All pixels did not reach target ESS (%g) after %g iterations",
+      "Some locations did not reach target ESS (%g) after %g iterations",
       amis_params[["target_ess"]], niter
       )
     warning(msg)
