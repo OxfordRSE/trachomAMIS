@@ -1,10 +1,20 @@
 #' Fit an MVN mixture model using mclust
-#' Can handle 1D as well as multivariate clustering. dat must have nrow observation and ncol dimensions, even if the number of dimensions is 1.
+#' 
+#' Can handle 1D as well as multivariate clustering. \code{dat} must have \code{nrow} observation and \code{ncol}
+#'  dimensions, even if the number of dimensions is 1.
 #' Uses BIC to determine the best number of components, up to max.components.
 #'
 #' @param dat a MATRIX or dataframe containing the observations to cluster.
 #' @param max.components A postive integer specifying the maximum number of components to fit in the mixture.
-#' @return list containing the mclust output and the best number of components G.
+#' @return list containing selected output from \code{mclust}:
+#' \describe{
+#' \item{\code{G}}{the best number of components G.}
+#' \item{\code{probs}}{vector of cluster probabilities (mixing weights).}
+#' \item{\code{Mean}}{matrix of cluster means.}
+#' \item{\code{Sigma}}{array of cluster covariance matrices.}
+#' \item{\code{BIC}}{The BIC of the chosen mixture.}
+#' \item{\code{ModelName}}{The model name from the package \code{mclust}.}
+#' }
 fit_mixture<-function(dat,max.components=10) {
   require(mclust)
   n<-nrow(dat)

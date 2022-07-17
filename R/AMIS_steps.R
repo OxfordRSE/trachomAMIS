@@ -17,18 +17,18 @@ write_model_input <- function(seeds, beta, input_file) {
 #'
 #' Compute matrix describing the weights for each parameter sampled, for each
 #' Implementation Unit (IU). One row per sample, one column per IU.  Each weight
-#' is computed based on the Randon-Nikodim derivative, taking into account
+#' is computed based on the empirical Randon-Nikodym derivative, taking into account
 #' geostatistical prevalence data for the specific IU and the prevalence value
 #' computed from the transmission model for the specific parameter sample.
 #'
 #' @param prev_data The geostatistical prevalence data. A n x m matrix where n
 #'     is the number of IUs and m the number of prevalence samples. (double)
-#' @param prev_sim A vector containing the siumulated prevalence value for each
+#' @param prev_sim A vector containing the simulated prevalence value for each
 #'     parameter sample. (double)
-#' @param delta A number. (double)
+#' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
+#'
 #' @param first_weight A vector containing the values for the right hand side of
 #'     the weight expression. Should be of the same length as \code{prev_sim}.
-# SS note: make alternative versions of this function for other ERN derivatives.
 compute_weight_matrix <- function(prev_data, prev_sim, amis_params, first_weight) {
   n_IUs <- dim(prev_data)[1]
   weight_mat <- matrix(NA, nrow = n_IUs, ncol = length(prev_sim))
@@ -64,12 +64,10 @@ compute_weight_matrix <- function(prev_data, prev_sim, amis_params, first_weight
 #' Compute the current effective sample size
 #'
 #' This function returns the effective sample size (ESS) for each Implementation
-#' Unit (IU). For each column of the weight matrix WEIGHT_MAT, the ESS component
+#' Unit (IU). For each column of the weight matrix \code{weight_mat}, the ESS component
 #' is computed as
-#'
-#' \deqn{\left(\sum_{i=1}^{N} w_{i}^2 \right)^{-1}},
-#'
-#' where \eqn{$N$} is the number of sampled parameter values for each IU.
+#' \deqn{(\sum_{i=1}^{N} w_{i}^2 )^{-1}}
+#' where \eqn{N} is the number of sampled parameter values for each IU.
 #'
 #' @param weight_mat The weight matrix. A n x m matrix with n the number of IUS
 #'     and m the number of sampled parameter values.
@@ -100,8 +98,8 @@ calculate_ess <- function(weight_mat,log) {
 }
 #' Calculate sum of weight matrix for active locations
 #'
-#' This function sums the rows of the weight matrix WEIGHT_MATRIX for which
-#' the effective sample size ESS is below a target size TARGET_SIZE.
+#' This function sums the rows of the weight matrix \code{weight_matrix} for which
+#' the effective sample size ESS is below a target size \code{target_size}.
 #'
 #' @param weight_matrix The weight_matrix as returned by
 #'     \link{compute_weight_matrix}
@@ -109,7 +107,7 @@ calculate_ess <- function(weight_mat,log) {
 #'     \link{calculate_ess}
 #' @param target_size A number representing the target size for the sample.
 #' @param log A logical indicating if the weights are logged.
-#' @return The updated weight matrix. Its size is unchanged.
+#' @return Vector containing the columns sums of the active rows of the weight matrix.
 update_according_to_ess_value <- function(weight_matrix, ess, target_size,log) {
   active_rows <- which(ess < target_size)
   if (log) {
@@ -120,6 +118,7 @@ update_according_to_ess_value <- function(weight_matrix, ess, target_size,log) {
   }
 }
 #' Systematic resampling function
+#' 
 #' Implement systematic resampling to reduce variance in weighted particle selection
 #' @param nsamples number of samples to draw
 #' @param weights vector of length equal to the number of particles, containing their weights
@@ -137,7 +136,8 @@ systematic_sample <- function(nsamples,weights,log=F) {
   return(1+matrix(rep(u,length(weights))>rep(cum,each=nsamples),nsamples,length(weights))%*%matrix(1,length(weights),1))
 }
 #' Fit mixture to weighted sample
-#' Weights are implemented by using systematic resampling to obtain an unweighted set of parameters
+#' 
+#' Weights are implemented by using systematic resampling to obtain an unweighted set of parameters.
 #' An unweighted mixture is then fitted using \code{fit_mixture}.
 #' @param parameters A matrix m x d matrix containing the sampled values for the
 #'     d parameters.
@@ -146,11 +146,12 @@ systematic_sample <- function(nsamples,weights,log=F) {
 #' @param log logical indicating if weights are logged.
 #' @return A list of the mixture components (see function \code{\link{fit_mixture}})
 #'     \describe{
-#'       \item{\code{alpha}}{The mixture weights}
-#'       \item{\code{muHat}}{The means of the components}
-#'       \item{\code{SigmaHat}}{The covariance matrices of the components}
+#'       \item{\code{probs}}{The mixture weights}
+#'       \item{\code{Mean}}{The means of the components}
+#'       \item{\code{Sigma}}{The covariance matrices of the components}
 #'       \item{\code{G}}{Number of components}
-#'       \item{\code{cluster}}{clustering IDs}
+#'       \item{\code{BIC}}{BIC of fitted mixture}
+#'       \item{\code{ModelName}}{Model name from package mclust}
 #'     }
 #'
 #' @seealso \code{\link{fit_mixture}}
@@ -161,17 +162,17 @@ weighted_mixture <- function(parameters, nsamples, weights, log=F) {
 
 #' Sample new parameters
 #'
-#' This function generates NSAMPLES new model parameter values according the
-#' t distribution with \code{df} degrees of freedom and the mixture components mixture.
+#' This function generates \code{nsamples} new model parameter values according the
+#' t-distribution with \code{df} degrees of freedom and the mixture components \code{mixture}.
 #'
 #' @param mixture A list of mixture components as returned by
 #'     \code{\link{evaluate_mixture}}
 #' @param n_samples A number of new parameters to sample (integer)
 #' @param df The degrees of freedom for the t-dsitributed proposal distribution.
-#' @param prior list containing the functions rprior and dprior
+#' @param prior list containing the functions \code{rprior} and \code{dprior}
 #' @param log A logical indicating if densities 
-#' @return A list containing params, A NSAMPLES x d matrix containing the sampled parameter values and
-#' prior_density, the corresponding vector of prior densities.
+#' @return A list containing \code{params}, an \code{nsamples} x d matrix containing the sampled parameter values and
+#' \code{prior_density}, the corresponding vector of prior densities.
 #'
 #' @seealso \code{\link{fit_mixture}}
 sample_new_parameters <- function(mixture, n_samples, df=3, prior, log) {
@@ -193,22 +194,22 @@ sample_new_parameters <- function(mixture, n_samples, df=3, prior, log) {
 
 #' Update the components of the mixture
 #'
-#' This function updates the components of the mixture COMPONENTS according to
-#' the current mixture mixture generated at iteration T.
+#' This function updates the mixture \code{components} according to
+#' the current mixture \code{mixture} generated at iteration \code{t}.
 #'
-#' @param clustMix A list of mixture components as returned by
-#'     \code{\link{evaluate_mixure}}
+#' @param mixture A list of mixture components as returned by
+#'     \code{\link{fit_mixture}}
 #' @param components A list of mixture components made of
 #'     \describe{
-#'       \item{\code{GG}}{A numeric vector}
-#'       \item{\code{Sigma}}{A list}
-#'       \item{\code{Mean}}{A list}
-#'       \item{\code{PP}}{A list}
+#'       \item{\code{G}}{A numeric vector containing the number of components from each AMIS iteration}
+#'       \item{\code{Sigma}}{A list of covariance matrices for each component}
+#'       \item{\code{Mean}}{A list of means for each component}
+#'       \item{\code{probs}}{A list probability weights for each component}
 #'     }
 #' @param t The current iteration index (integer)
 #' @return The updated \code{components} list
 #'
-#' @seealso \code{\link{evaluate_mixture}}, \code{\link{mclustMix}}
+#' @seealso \code{\link{evaluate_mixture}}, \code{\link{fit_mixture}}
 update_mixture_components <- function(mixture, components, t) {
   components$G[t] <- mixture$G
   G_previous <- sum(components$G[1:(t - 1)]) # Number of pre-existing components
@@ -222,31 +223,28 @@ update_mixture_components <- function(mixture, components, t) {
 #' Compute the prior/proposal ratio
 #'
 #' This function returns the ratio between the prior and proposal distribution
-#' for each sampled parameter value (i.e. each row in PARAM).
-#'
-#' This function returns
-#' \deqn(\frac{\pi(\theta _j)}{\frac{1}{N_1 + ... + N_t}\sum_{u=1}^{t}N_u \phi_u(\theta _j)})
-#' See step (4) if the AMIS algorithm in
-#'
+#' for each sampled parameter value (i.e. each row in \code{param}).
+#' This function returns the first weight
+#' See step (4) of the AMIS algorithm in
 #' Integrating Geostatistical Maps And Transmission Models Using Adaptive
 #' Multiple Importance Sampling
 #' Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez,
 #' T. Deirdre Hollingsworth, Simon E.F. Spencer
 #' medRxiv 2020.08.03.20146241;
-#' doi: \url{https://doi.org/10.1101/2020.08.03.20146241}
+#' doi: https://doi.org/10.1101/2020.08.03.20146241
 #'
 #' @param components A list of mixture components made of
 #'     \describe{
-#'       \item{\code{GG}}{A numeric vector containing the number of components from each AMIS iteration}
+#'       \item{\code{G}}{A numeric vector containing the number of components from each AMIS iteration}
 #'       \item{\code{Sigma}}{A list of covariace matrices from each component}
 #'       \item{\code{Mean}}{A list of means from each component}
-#'       \item{\code{PP}}{A list of probability weights for each component (unnormalised)}
+#'       \item{\code{probs}}{A list of probability weights for each component (unnormalised)}
 #'     }
 #' @param param A matrix containing the sampled parameter vectors.
 #' @param prior_density Vector containing the prior density of each sampled parameter vector.
 #' @param df The degrees of freedom for the t-distributed proposal distribution.
 #' @param log A logical indicating whether to work on the log scale.
-#' @return A vector contaning the prior/proposal ratio for each row in
+#' @return A vector containing the prior/proposal ratio for each row in
 #'     \code{param}
 compute_prior_proposal_ratio <- function(components, param, prior_density, df, log) {
   probs <- components$probs # /sum(unlist(components$probs)) # to normalise?
