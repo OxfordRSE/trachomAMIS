@@ -17,10 +17,10 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   )
   ess <- calculate_ess(weight_matrix,amis_params[["log"]])
   components <- list(
-    GG = c(0),
-    Sigma = list(),
-    Mean = list(),
-    PP = list()
+    G = c(0), # number of mixture components from proposal for each iteration (zero is for prior)
+    Sigma = list(), # list of covariance matrices for each component
+    Mean = list(), # list of means for each component
+    probs = list() # probability of each component (unnormalised)
   )
   seeds <- function(t) ((t - 1) * nsamples + 1):(t * nsamples)
   niter <- 1
@@ -33,7 +33,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
       simulated_prevalences,
       transmission_model(seeds(t), new_params[,1])
     )
-    components <- update_mixture_components(clustMix, components, t)
+    components <- update_mixture_components(mixture, components, t)
     param <- rbind(param, new_params)
     first_weight <- compute_prior_proposal_ratio(components, param, prop$d)
     WW <- compute_weight_matrix(prevalence_map, simulated_prevalences, amis_params[["delta"]], first_weight)

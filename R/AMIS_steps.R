@@ -199,7 +199,7 @@ sample_new_parameters <- function(mixture, n_samples, df=3, prior, log) {
 #' Update the components of the mixture
 #'
 #' This function updates the components of the mixture COMPONENTS according to
-#' the current mixture CLUSTMIX generated at iteration T.
+#' the current mixture mixture generated at iteration T.
 #'
 #' @param clustMix A list of mixture components as returned by
 #'     \code{\link{evaluate_mixure}}
@@ -214,18 +214,16 @@ sample_new_parameters <- function(mixture, n_samples, df=3, prior, log) {
 #' @return The updated \code{components} list
 #'
 #' @seealso \code{\link{evaluate_mixture}}, \code{\link{mclustMix}}
-update_mixture_components <- function(clustMix, components, t) {
-  components$GG[t] <- clustMix$G
-  G1 <- sum(components$GG[1:(t - 1)])
-  for (i in 1:clustMix$G) {
-    components$Sigma[[i + G1]] <- clustMix$SigmaHat[, , i]
-    components$Mean[[i + G1]] <- clustMix$muHat[i, ]
-    components$PP[[i + G1]] <- clustMix$alpha[i] ### scale by number of points
+update_mixture_components <- function(mixture, components, t) {
+  components$G[t] <- mixture$G
+  G_previous <- sum(components$G[1:(t - 1)]) # Number of pre-existing components
+  for (i in 1:mixture$G) {
+    components$Sigma[[i + G_previous]] <- mixture$Sigma[, , i]
+    components$Mean[[i + G_previous]] <- mixture$Mean[,i]
+    components$probs[[i + G_previous]] <- mixture$probs[i] ### scale by number of points if nsamples varies by iteration
   }
   return(components)
 }
-
-
 #' Compute the prior/proposal ratio
 #'
 #' This function returns the ratio between the prior and proposal distribution
