@@ -1,7 +1,3 @@
-dprop0 <- function(x) {
-  return(dunif(x[1], min = 0.05, max = 0.175) * dunif(x[2], min = 0, max = 1))
-}
-
 #' Write input file required by transmission model
 #'
 #' Write a 2 columns csv file named INPUT_FILE to disk. The first column SEEDS
@@ -17,7 +13,6 @@ write_model_input <- function(seeds, beta, input_file) {
   colnames(input_params) <- c("randomgen", "bet")
   write.csv(input_params, file = input_file, row.names = FALSE)
 }
-
 #' Compute weight matrix
 #'
 #' Compute matrix describing the weights for each parameter sampled, for each
@@ -242,24 +237,22 @@ update_mixture_components <- function(mixture, components, t) {
 #'
 #' @param components A list of mixture components made of
 #'     \describe{
-#'       \item{\code{GG}}{A numeric vector}
-#'       \item{\code{Sigma}}{A list}
-#'       \item{\code{Mean}}{A list}
-#'       \item{\code{PP}}{A list}
+#'       \item{\code{GG}}{A numeric vector containing the number of components from each AMIS iteration}
+#'       \item{\code{Sigma}}{A list of covariace matrices from each component}
+#'       \item{\code{Mean}}{A list of means from each component}
+#'       \item{\code{PP}}{A list of probability weights for each component (unnormalised)}
 #'     }
-#' @param param A 2 column matrix containing the values for the two parameters.
-#' @param dprop The proposal distribution as returned by \code{mvtComp()$d}.
+#' @param param A matrix containing the sampled parameter vectors.
+#' @param prior_density Vector containing the prior density of each sampled parameter vector.
+#' @param df The degrees of freedom for the t-distributed proposal distribution.
 #' @return A vector contaning the prior/proposal ratio for each row in
 #'     \code{param}
-compute_prior_proposal_ratio <- function(components, param, dprop) {
-  PP <- components$PP
+compute_prior_proposal_ratio <- function(components, param, prior_density, df) {
+  probs <- components$probs # /sum(unlist(components$probs)) # to normalise?
   Sigma <- components$Sigma
   Mean <- components$Mean
-
-  G2 <- sum(components$GG)
-  prop.val <- sapply(1:nrow(param), function(b) sum(sapply(1:G2, function(g) PP[[g]] * dprop(param[b, ], mu = Mean[[g]], Sig = Sigma[[g]]))) + dprop0(param[b, ])) ## FIX to be just the proposal density ALSO scale by number of points
-
-  first_weight <- sapply(1:nrow(param), function(b) dprop0(param[b, ]) / prop.val[b]) # prior/proposal
-
+  G <- sum(components$G)
+  prop.val <- sapply(1:nrow(param), function(b) {sum(sapply(1:G, function(g) {probs[[g]]*mnormt::dmt(param[b, ], mean = Mean[[g]], S = Sigma[[g]],df=df)})) + prior_density[b]}) # Assumes number of points is equal in each iteration.
+  first_weight <- prior_density/prop.val # prior/proposal
   return(first_weight)
 }
