@@ -24,7 +24,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   )
   seeds <- function(t) ((t - 1) * nsamples + 1):(t * nsamples)
   niter <- 1
-  for (t in 2:amis_params[["T"]]) {
+  for (t in 2:amis_params[["max_iters"]]) {
     print(sprintf("AMIS iteration %g", t))
     mean_weights <- update_according_to_ess_value(weight_matrix, ess, amis_params[["target_ess"]],amis_params[["log"]]) 
     mixture <- weighted_mixture(param, amis_params[["mixture_samples"]], mean_weights, amis_params[["log"]])
@@ -43,14 +43,13 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     if (min(ess) >= amis_params[["target_ess"]]) break
   }
 
-  if(niter == amis_params[["T"]] && min(ess) < amis_params[["target_ess"]]) {
+  if(niter == amis_params[["max_iters"]] && min(ess) < amis_params[["target_ess"]]) {
     msg <- sprintf(
       "Some locations did not reach target ESS (%g) after %g iterations",
       amis_params[["target_ess"]], niter
       )
     warning(msg)
   }
-
   allseeds <- 1:(niter * nsamples)
   ret <- data.frame(allseeds, param, simulated_prevalences, t(weight_matrix))
   if (is.null(rownames(prevalence_map))) {
