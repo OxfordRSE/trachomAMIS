@@ -52,12 +52,17 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   }
 
   allseeds <- 1:(niter * nsamples)
-  ret <- data.frame(allseeds, param[,-2], simulated_prevalences, t(WW))
-  colnames(ret) <- c(
-      "seeds",
-      "beta",
-      "sim_prev",
-      sapply(1:dim(WW)[1], function(idx) sprintf("iu%g", idx))
-      )
+  ret <- data.frame(allseeds, param[,-2], simulated_prevalences, t(weight_matrix))
+  if (is.null(rownames(prevalence_map))) {
+    iunames<-sapply(1:dim(weight_matrix)[1], function(idx) sprintf("iu%g", idx))
+  } else {
+    iunames<-rownames(prevalence_map)
+  }
+  if (is.null(colnames(param))) {
+    paramnames<-sapply(1:dim(param)[2], function(idx) sprintf("param%g", idx))
+  } else {
+    paramnames<-colnames(param)
+  }
+  colnames(ret) <- c("seeds",paramnames,"sim_prev",iunames)
   return(ret)
 }
