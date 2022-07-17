@@ -8,7 +8,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   # to avoid duplication, evaluate prior density now.
   prior_density<-sapply(1:nsamples,function(b) {prior$dprior(param[b,],log=amis_params[["log"]])})
   # Simulate from transmission model
-  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param[,1])
+  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param) # SS changed to pass ALL parameters to the transmission model
   weight_matrix <- compute_weight_matrix(
     prevalence_map,
     simulated_prevalences,
@@ -31,7 +31,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
     simulated_prevalences <- append(
       simulated_prevalences,
-      transmission_model(seeds(t), new_params[,1])
+      transmission_model(seeds(t), new_params$params)
     )
     components <- update_mixture_components(mixture, components, t)
     param <- rbind(param, new_params$params)
@@ -52,7 +52,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   }
 
   allseeds <- 1:(niter * nsamples)
-  ret <- data.frame(allseeds, param[,-2], simulated_prevalences, t(weight_matrix))
+  ret <- data.frame(allseeds, param, simulated_prevalences, t(weight_matrix))
   if (is.null(rownames(prevalence_map))) {
     iunames<-sapply(1:dim(weight_matrix)[1], function(idx) sprintf("iu%g", idx))
   } else {
