@@ -4,18 +4,18 @@
 \alias{update_mixture_components}
 \title{Update the components of the mixture}
 \usage{
-update_mixture_components(clustMix, components, t)
+update_mixture_components(mixture, components, t)
 }
 \arguments{
-\item{clustMix}{A list of mixture components as returned by
-\code{\link{evaluate_mixure}}}
+\item{mixture}{A list of mixture components as returned by
+\code{\link{fit_mixture}}}
 
 \item{components}{A list of mixture components made of
 \describe{
-\item{\code{GG}}{A numeric vector}
-\item{\code{Sigma}}{A list}
-\item{\code{Mean}}{A list}
-\item{\code{PP}}{A list}
+\item{\code{G}}{A numeric vector containing the number of components from each AMIS iteration}
+\item{\code{Sigma}}{A list of covariance matrices for each component}
+\item{\code{Mean}}{A list of means for each component}
+\item{\code{probs}}{A list probability weights for each component}
 }}
 
 \item{t}{The current iteration index (integer)}
@@ -24,9 +24,9 @@ update_mixture_components(clustMix, components, t)
 The updated \code{components} list
 }
 \description{
-This function updates the components of the mixture COMPONENTS according to
-the current mixture CLUSTMIX generated at iteration T.
+This function updates the mixture \code{components} according to
+the current mixture \code{mixture} generated at iteration \code{t}.
 }
 \seealso{
-\code{\link{evaluate_mixture}}, \code{\link{mclustMix}}
+\code{\link{evaluate_mixture}}, \code{\link{fit_mixture}}
 }
