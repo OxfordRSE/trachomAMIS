@@ -15,12 +15,15 @@ compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_par
   n_sims <- dim(simulated_prevalence)[1]
   weight_matrix <- matrix(rep(first_weight,nlocs), nrow = n_sims, ncol = n_locs)
   if (amis_params[["method"]]=="analytical") {
-    return(compute_weight_matrix_analytical(prevalence_map, prev_sim, amis_params, weight_matrix))
+    compute_weight<-compute_weight_matrix_analytical
   } else if (amis_params[["method"]]=="empirical") {
-    return(compute_weight_matrix_empirical(prevalence_map, prev_sim, amis_params, weight_matrix))
+    compute_weight<-compute_weight_matrix_empirical
   } else {
     stop("method should be one of \"empirical\" or \"analytical\".\n")
   }
+  # Update the weights by the latest likelihood (filtering)
+  weight_matrix <- compute_weight(prevalence_map,simulated_prevalence[,t],amis_params,weight_matrix)
+  return(weight_matrix)
 }
 
 #' Compute weight matrix using empirical Radon-Nikodym derivative
