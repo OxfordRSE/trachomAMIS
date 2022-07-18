@@ -30,12 +30,12 @@ compute_weight_matrix <- function(prev_data, prev_sim, amis_params, first_weight
     }
   }
   for (i in 1:n_IUs) {
-    w <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data[i, ])
+    w <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prev_data[i, ])
     if (amis_params[["log"]]) {
       w <- w + first_weight
       M<-max(w)
       S<-M+log(sum(exp(w-M)))
-      if (S>-Inf) {w <- w - S}
+      if (M>-Inf) {w <- w - S}
     } else {
       w <- w * first_weight
       if (sum(w) > 0) {w <- w / sum(w)}
@@ -97,6 +97,8 @@ update_according_to_ess_value <- function(weight_matrix, ess, target_size,log) {
   active_rows <- which(ess < target_size)
   if (log) {
     M<-apply(weight_matrix[active_rows,,drop=FALSE],2,max)
+    wh<-which(M==-Inf)
+    M[wh]<-0
     return(M+log(colSums(exp(weight_matrix[active_rows,,drop=FALSE]-rep(M,each=length(active_rows))))))
   } else {
     return(colSums(weight_matrix[active_rows,,drop=FALSE]))
