@@ -4,17 +4,20 @@
 #' @param prevalence_map The geostatistical prevalence map. An L x M matrix where L
 #'     is the number of IUs and M the number of prevalence samples. (double)
 #'     OR a list containing data and likelihood.
-#' @param prev_sim A vector containing the simulated prevalence value for each
-#'     parameter sample. (double)
+#' @param simulated_prevalence An N x timepoints matrix containing the simulated prevalence values for each of the
+#'     N parameter samples. (double)
 #' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
 #'
 #' @param first_weight A vector containing the values for the right hand side of
-#'     the weight expression. Should be of the same length as \code{prev_sim}.
-compute_weight_matrix <- function(prevalence_map, prev_sim, amis_params, first_weight) {
+#'     the weight expression. Should be of the same length as the rows in \code{simulated_prevalence}.
+compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_params, first_weight) {
+  n_locs <- dim(prevalence_map$data)[1]
+  n_sims <- dim(simulated_prevalence)[1]
+  weight_matrix <- matrix(rep(first_weight,nlocs), nrow = n_sims, ncol = n_locs)
   if (amis_params[["method"]]=="analytical") {
-    return(compute_weight_matrix_analytical(prevalence_map, prev_sim, amis_params, first_weight))
+    return(compute_weight_matrix_analytical(prevalence_map, prev_sim, amis_params, weight_matrix))
   } else if (amis_params[["method"]]=="empirical") {
-    return(compute_weight_matrix_empirical(prevalence_map, prev_sim, amis_params, first_weight))
+    return(compute_weight_matrix_empirical(prevalence_map, prev_sim, amis_params, weight_matrix))
   } else {
     stop("method should be one of \"empirical\" or \"analytical\".\n")
   }
@@ -34,11 +37,9 @@ compute_weight_matrix <- function(prevalence_map, prev_sim, amis_params, first_w
 #'     parameter sample. (double)
 #' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
 #'
-#' @param first_weight A vector containing the values for the right hand side of
-#'     the weight expression. Should be of the same length as \code{prev_sim}.
-compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_params, first_weight) {
-  n_IUs <- dim(prevalence_map)[1]
-  weight_mat <- matrix(NA, nrow = n_IUs, ncol = length(prev_sim))
+#' @param weight_matrix A matrix containing the current values of the weights.
+#' @return An updated weight matrix.
+compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_params, weight_matrix) {
   delta<-amis_params[["delta"]]
   # define function to calculate empirical RN derivative from Touloupou, Retkute, Hollingsworth and Spencer (2020)
   radon_niko_deriv <- function(idx, prev_data_for_IU, weight_vector, log=amis_params[["log"]]) {
@@ -53,7 +54,7 @@ compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_param
   }
   wh<-which(!is.na(prevalence_map$data[,1])) # if there is no data for a location, do not update weights.
   for (i in wh) {
-    weight_matrix[i,] <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map$data[i, ], weight_vector=first_weight)
+    weight_matrix[i,] <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map$data[i, ], weight_vector=weight_matrix[i,])
   }
   return(weight_matrix)
 }
@@ -75,11 +76,8 @@ compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_param
 #'     parameter sample. (double)
 #' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
 #'
-#' @param first_weight A vector containing the values for the right hand side of
-#'     the weight expression. Should be of length L.
-compute_weight_matrix_analytical <- function(prevalence_map, prev_sim, amis_params, first_weight) {
-  n_IUs <- dim(prevalence_map$data)[1]
-  weight_mat <- matrix(NA, nrow = n_IUs, ncol = length(prev_sim))
+#' @param weight_matrix An existing N x L weight matrix to update,
+compute_weight_matrix_analytical <- function(prevalence_map, prev_sim, amis_params, weight_matrix) {
   likelihood <- prevalence_map$likelihood
   delta<-amis_params[["delta"]]
   # define function to calculate semi-empirical RN derivative from Touloupou, Retkute, Hollingsworth and Spencer (2020)
@@ -95,7 +93,7 @@ compute_weight_matrix_analytical <- function(prevalence_map, prev_sim, amis_para
   }
   wh<-which(!is.na(prevalence_map$data[,1])) # if there is no data for a location, do not update weights.
   for (i in wh) {
-    weight_matrix[i,] <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map$data[i, ], weight_vector=first_weight)
+    weight_matrix[i,] <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map$data[i, ], weight_vector=weight_matrix[i,])
   }
   return(weight_matrix)
 }

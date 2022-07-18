@@ -28,6 +28,8 @@
 #' #' called ess containing the obtained ess at each location.  
 #' @export
 amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = NULL) {
+  # prevalence_map now expected to be a list, convert for bwd compat.
+  if(is.matrix(prevalence_map)) {prevalence_map=list(data=prevalence_map)}
   if(!is.null(seed)) set.seed(seed)
   nsamples <- amis_params[["nsamples"]]
   print("AMIS iteration 1")
