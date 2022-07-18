@@ -10,34 +10,34 @@
 #'
 #' @param first_weight A vector containing the values for the right hand side of
 #'     the weight expression. Should be of the same length as \code{prev_sim}.
-compute_weight_matrix_wrapper <- function(prevalence_map, prev_sim, amis_params, first_weight) {
+compute_weight_matrix <- function(prevalence_map, prev_sim, amis_params, first_weight) {
   if (amis_params[["method"]]=="analytical") {
     return(compute_weight_matrix_analytical(prevalence_map, prev_sim, amis_params, first_weight))
   } else if (amis_params[["method"]]=="empirical") {
-    return(compute_weight_matrix(prevalence_map, prev_sim, amis_params, first_weight))
+    return(compute_weight_matrix_empirical(prevalence_map, prev_sim, amis_params, first_weight))
   } else {
     stop("method should be one of \"empirical\" or \"analytical\".\n")
   }
 }
 
-#' Compute weight matrix
+#' Compute weight matrix using empirical Radon-Nikodym derivative
 #'
 #' Compute matrix describing the weights for each parameter sampled, for each
 #' Implementation Unit (IU). One row per sample, one column per IU.  Each weight
-#' is computed based on the empirical Randon-Nikodym derivative, taking into account
+#' is computed based on the empirical Radon-Nikodym derivative, taking into account
 #' geostatistical prevalence data for the specific IU and the prevalence value
 #' computed from the transmission model for the specific parameter sample.
 #'
-#' @param prev_data The geostatistical prevalence data. A n x m matrix where n
-#'     is the number of IUs and m the number of prevalence samples. (double)
-#' @param prev_sim A vector containing the simulated prevalence value for each
+#' @param prevalence_map The geostatistical prevalence data. An L x M matrix where L
+#'     is the number of IUs and M the number of prevalence samples. (double)
+#' @param prev_sim A vector (or matrix) containing the simulated prevalence value for each
 #'     parameter sample. (double)
 #' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
 #'
 #' @param first_weight A vector containing the values for the right hand side of
 #'     the weight expression. Should be of the same length as \code{prev_sim}.
-compute_weight_matrix <- function(prev_data, prev_sim, amis_params, first_weight) {
-  n_IUs <- dim(prev_data)[1]
+compute_weight_matrix_empirical <- function(prevalence_map, prev_sim, amis_params, first_weight) {
+  n_IUs <- dim(prevalence_map)[1]
   weight_mat <- matrix(NA, nrow = n_IUs, ncol = length(prev_sim))
   delta<-amis_params[["delta"]]
   # define function to calculate empirical RN derivative from Touloupou, Retkute, Hollingsworth and Spencer (2020)
@@ -52,7 +52,7 @@ compute_weight_matrix <- function(prev_data, prev_sim, amis_params, first_weight
     }
   }
   for (i in 1:n_IUs) {
-    w <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prev_data[i, ])
+    w <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map[i, ])
     if (amis_params[["log"]]) {
       w <- w + first_weight
       M<-max(w)
