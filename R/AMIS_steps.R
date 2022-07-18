@@ -46,6 +46,59 @@ compute_weight_matrix <- function(prev_data, prev_sim, amis_params, first_weight
   return(weight_mat)
 }
 
+#' Compute weight matrix using (semi-)analytical Radon-Nikodym derivative
+#'
+#' Compute matrix describing the weights for each parameter sampled, for each
+#' Implementation Unit (IU). One row per sample, one column per IU.  Each weight
+#' is computed based on the (semi-)analytical Radon-Nikodym derivative, taking into account
+#' geostatistical prevalence data for the specific IU and the prevalence value
+#' computed from the transmission model for the specific parameter sample.
+#'
+#' @param prevalence_map The geostatistical prevalence map. A list containing objects:
+#' \code{data}, an L x M matrix of data (where L is the number of IUs and
+#'  M the number of data points); and \code{likelihood}, a function taking a row of data
+#'   and the output from the transmission
+#' model as arguments (and logical \code{log}) and returning the (log)-likelihood.
+#' @param prev_sim A vector (or matrix for multiple timepoints) containing the simulated prevalence value for each
+#'     parameter sample. (double)
+#' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
+#'
+#' @param first_weight A vector containing the values for the right hand side of
+#'     the weight expression. Should be of length L.
+compute_weight_matrix_analytical <- function(prevalence_map, prev_sim, amis_params, first_weight) {
+  n_IUs <- dim(prevalence_map$data)[1]
+  weight_mat <- matrix(NA, nrow = n_IUs, ncol = length(prev_sim))
+  likelihood <- prevalence_map$likelihood
+  delta<-amis_params[["delta"]]
+  # define function to calculate empirical RN derivative from Touloupou, Retkute, Hollingsworth and Spencer (2020)
+  radon_niko_deriv <- function(idx, prev_data_for_IU, log=amis_params[["log"]]) {
+    #f <- length(which((prev_data_for_IU > prev_sim[idx] - delta / 2) & (prev_data_for_IU <= prev_sim[idx] + delta / 2)))
+    f <- likelihood(prev_data_for_IU, prev_sim[idx],log)
+    g_terms <- first_weight[which((prev_sim > prev_sim[idx] - delta / 2) & (prev_sim <= prev_sim[idx] + delta / 2))]
+    if (log) {
+      M<-max(g_terms)
+      return(log(f)-M-log(sum(exp(g_terms-M))))
+    } else {
+      return(f/sum(g_terms))
+    }
+  }
+  for (i in 1:n_IUs) {
+    w <- sapply(1:length(prev_sim), radon_niko_deriv, prev_data_for_IU=prevalence_map$data[i, ])
+    if (amis_params[["log"]]) {
+      w <- w + first_weight
+      M<-max(w)
+      S<-M+log(sum(exp(w-M)))
+      if (M>-Inf) {w <- w - S}
+    } else {
+      w <- w * first_weight
+      if (sum(w) > 0) {w <- w / sum(w)}
+      # NB it doesn't matter if all the simulations have weight zero in an early iteration, as long as this is not true for all active IUs.
+    }
+    weight_mat[i, ] <- w
+  }
+  return(weight_mat)
+}
+
 #' Compute the current effective sample size
 #'
 #' This function returns the effective sample size (ESS) for each Implementation
