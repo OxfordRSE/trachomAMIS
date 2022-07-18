@@ -23,6 +23,16 @@ compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_par
   }
   # Update the weights by the latest likelihood (filtering)
   weight_matrix <- compute_weight(prevalence_map,simulated_prevalence[,t],amis_params,weight_matrix)
+  # renormalise weights
+  if (amis_params[["log"]]) {
+    M<-apply(weight_matrix,2,max)
+    wh<-which(M>-Inf)
+    weight_matrix[,wh]<-weight_matrix[,wh]-M[wh]-log(colSums(exp(weight_matrix[,wh]-rep(M,each=n_sims))))
+  } else {
+    S<-colSums(weight_matrix)
+    wh<-which(S>0)
+    weight_matrix[,wh]<-weight_matrix[,wh]/S[wh]
+  }
   return(weight_matrix)
 }
 
