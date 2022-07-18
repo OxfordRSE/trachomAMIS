@@ -1,3 +1,25 @@
+#' Compute weight matrix using appropriate method
+#' 
+#' Wrapper function to select appropriate method to calculate weight matrix.
+#' @param prevalence_map The geostatistical prevalence map. An L x M matrix where L
+#'     is the number of IUs and M the number of prevalence samples. (double)
+#'     OR a list containing data and likelihood.
+#' @param prev_sim A vector containing the simulated prevalence value for each
+#'     parameter sample. (double)
+#' @param amis_params A list of parameters, e.g. from \link{default_amis_params}
+#'
+#' @param first_weight A vector containing the values for the right hand side of
+#'     the weight expression. Should be of the same length as \code{prev_sim}.
+compute_weight_matrix_wrapper <- function(prevalence_map, prev_sim, amis_params, first_weight) {
+  if (amis_params[["method"]]=="analytical") {
+    return(compute_weight_matrix_analytical(prevalence_map, prev_sim, amis_params, first_weight))
+  } else if (amis_params[["method"]]=="empirical") {
+    return(compute_weight_matrix(prevalence_map, prev_sim, amis_params, first_weight))
+  } else {
+    stop("method should be one of \"empirical\" or \"analytical\".\n")
+  }
+}
+
 #' Compute weight matrix
 #'
 #' Compute matrix describing the weights for each parameter sampled, for each

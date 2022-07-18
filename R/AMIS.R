@@ -4,8 +4,10 @@
 
 #' Run the AMIS algorithm to fit a transmission model to a map
 #'
-#' @param prevalence_map An L x M matrix containing samples from the prevalence map, where L is the number of locations and M the number of samples.
-#' The location names are inherited from \code{rownames(prevalence_map)} if possible.
+#' @param prevalence_map An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
+#' The location names are inherited from \code{rownames(prevalence_map)} if possible. If instead, an analytic form of the prevalence map is available,
+#' supply a list containing objects \code{data} (an L x M matrix of data) and \code{likelihood} a function taking a row of data and the output from the transmission
+#' model as arguments (and logical \code{log}) and returning the (log)-likelihood. 
 #' @param transmission_model A function taking a vector of seeds and a matrix of parameter vectors as inputs.
 #' @param prior A list containing the functions \code{dprior} and \code{rprior} (density and RNG).
 #' \code{rprior} must produce an n by d MATRIX of parameters, even when d=1.
@@ -19,6 +21,7 @@
 #' \item{\code{target_ess}the target effective sample size.}
 #' \item{\code{log} logicalindicating if calculations are to be performed on log scale.} 
 #' \item{\code{max_iters}maximum number of AMIS iterations.}
+#' \item{\code{method}string describing the appropriate method to use, e.g. empirical.}
 #' }
 #' @param seed Optional seed for the random number generator
 #' @return A list containing a dataframe of the sampled parameters, simulation seed, and weight in each location, plus a vector
