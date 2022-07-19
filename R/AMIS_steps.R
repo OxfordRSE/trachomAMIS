@@ -11,18 +11,23 @@
 #' @param first_weight A vector containing the values for the right hand side of
 #'     the weight expression. Should be of the same length as the rows in \code{simulated_prevalence}.
 compute_weight_matrix <- function(prevalence_map, simulated_prevalence, amis_params, first_weight) {
-  n_locs <- dim(prevalence_map$data)[1]
+  timepoints<-length(prevalence_map)
+  n_locs <- dim(prevalence_map[[1]]$data)[1]
   n_sims <- dim(simulated_prevalence)[1]
   weight_matrix <- matrix(rep(first_weight,nlocs), nrow = n_sims, ncol = n_locs)
-  if (amis_params[["method"]]=="analytical") {
-    compute_weight<-compute_weight_matrix_analytical
-  } else if (amis_params[["method"]]=="empirical") {
-    compute_weight<-compute_weight_matrix_empirical
-  } else {
-    stop("method should be one of \"empirical\" or \"analytical\".\n")
+  for (t in 1:timepoints) {
+    if (prevalence_map[[t]]$method=="analytical") {
+      compute_weight<-compute_weight_matrix_analytical
+    } else if (prevalence_map[[t]]$method=="empirical") {
+      compute_weight<-compute_weight_matrix_empirical
+    } else if (prevalence_map[[t]]$method=="histogram") {
+      compute_weight<-compute_weight_matrix_histogram
+    } else {
+      stop("method should be one of \"empirical\", \"histogram\" or \"analytical\".\n")
+    }
+    # Update the weights by the latest likelihood (filtering)
+    weight_matrix <- compute_weight(prevalence_map[[t]],simulated_prevalence[,t],amis_params,weight_matrix)
   }
-  # Update the weights by the latest likelihood (filtering)
-  weight_matrix <- compute_weight(prevalence_map,simulated_prevalence[,t],amis_params,weight_matrix)
   # renormalise weights
   if (amis_params[["log"]]) {
     M<-apply(weight_matrix,2,max)
