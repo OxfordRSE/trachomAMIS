@@ -82,7 +82,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     warning(msg)
   }
   allseeds <- 1:(niter * nsamples)
-  ret <- data.frame(allseeds, param, simulated_prevalences, t(weight_matrix))
+  ret <- data.frame(allseeds, param, simulated_prevalences, weight_matrix)
   if (is.null(rownames(prevalence_map))) {
     iunames<-sapply(1:dim(weight_matrix)[1], function(idx) sprintf("iu%g", idx))
   } else {

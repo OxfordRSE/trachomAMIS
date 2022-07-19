@@ -144,7 +144,7 @@ calculate_ess <- function(weight_mat,log) {
       }
     }
   }
-  return(apply(weight_mat, 1, ess_for_IU))
+  return(apply(weight_mat, 2, ess_for_IU))
 }
 #' Calculate sum of weight matrix for active locations
 #'
@@ -157,16 +157,16 @@ calculate_ess <- function(weight_mat,log) {
 #'     \link{calculate_ess}
 #' @param target_size A number representing the target size for the sample.
 #' @param log A logical indicating if the weights are logged.
-#' @return Vector containing the columns sums of the active rows of the weight matrix.
+#' @return Vector containing the row sums of the active columns of the weight matrix.
 update_according_to_ess_value <- function(weight_matrix, ess, target_size,log) {
-  active_rows <- which(ess < target_size)
+  active_cols <- which(ess < target_size)
   if (log) {
-    M<-apply(weight_matrix[active_rows,,drop=FALSE],2,max)
+    M<-apply(weight_matrix[,active_cols,drop=FALSE],1,max)
     wh<-which(M==-Inf)
     M[wh]<-0
-    return(M+log(colSums(exp(weight_matrix[active_rows,,drop=FALSE]-rep(M,each=length(active_rows))))))
+    return(M+log(rowSums(exp(weight_matrix[,active_cols,drop=FALSE]-rep(M,length(active_cols))))))
   } else {
-    return(colSums(weight_matrix[active_rows,,drop=FALSE]))
+    return(rowSums(weight_matrix[,active_cols,drop=FALSE]))
   }
 }
 #' Systematic resampling function
