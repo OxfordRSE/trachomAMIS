@@ -1,16 +1,14 @@
-# SS note: Also implement minimum error RN derivative?
-
 #' Run the AMIS algorithm to fit a transmission model to a map
 #'
 #' @param prevalence_map An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
 #' The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with one entry for each timepoint.
 #' Each entry must be a list containing objects \code{data} (an L x M matrix of data as above);
-#' and \code{likelihood} a function taking arguments \code{data} (a row of data from the above matrix),
-#' \code{prevalence} (the output from the transmission model) and optional logical \code{log}, which returns the (log)-likelihood.
+#' and \code{likelihood} a function taking arguments \code{data} (a matrix of data as above),
+#' \code{prevalence} (a matrix of output from the transmission model) and optional logical \code{log}, which returns the vector of (log)-likelihoods.
 #' If a likelihood is not specified then it is assumed that
 #' the data consist of samples from a geo-statistical model and empirical methods are used.  
 #' @param transmission_model A function taking a vector of n seeds and an n x d matrix of parameter vectors as inputs
-#'  and producing a n x timepoints MATRIX of prevalences as output (it must be a matrix even when timepoints=1).
+#'  and producing a n x timepoints MATRIX of prevalences as output (it must be a matrix even when timepoints==1).
 #' @param prior A list containing the functions \code{dprior} and \code{rprior} (density and RNG).
 #' \code{rprior} must produce an n by d MATRIX of parameters, even when d=1.
 #' parameter names are inherited from the \code{colnames} from the output of \code{rprior} if possible.
@@ -40,9 +38,11 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   # to avoid duplication, evaluate prior density now.
   prior_density<-sapply(1:nsamples,function(b) {prior$dprior(param[b,],log=amis_params[["log"]])})
   # Simulate from transmission model
-  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param) 
+  simulated_prevalences <- transmission_model(seeds = 1:nsamples, param)
+  # to avoid duplication, evaluate likelihood now.
+  likelihoods<- compute_likelihood(prevalence_map,simulated_prevalences,amis_params)
   weight_matrix <- compute_weight_matrix(
-    prevalence_map,
+    likelihoods,
     simulated_prevalences,
     amis_params,
     first_weight = rep(1-amis_params[["log"]], nsamples)
@@ -61,13 +61,15 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
     print(sprintf("AMIS iteration %g", t))
     mean_weights <- update_according_to_ess_value(weight_matrix, ess, amis_params[["target_ess"]],amis_params[["log"]]) 
     mixture <- weighted_mixture(param, amis_params[["mixture_samples"]], mean_weights, amis_params[["log"]])
-    new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
-    simulated_prevalences <- rbind(simulated_prevalences,transmission_model(seeds(t), new_params$params))
     components <- update_mixture_components(mixture, components, t)
+    new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
     param <- rbind(param, new_params$params)
     prior_density <- c(prior_density,new_params$prior_density)
+    new_prevalences <- transmission_model(seeds(t), new_params$params)
+    simulated_prevalences <- rbind(simulated_prevalences,new_prevalences)
+    likelihoods <- compute_likelihood(prevalence_map,new_prevalences,amis_params,likelihoods)
     first_weight <- compute_prior_proposal_ratio(components, param, prior_density, amis_params[["df"]], amis_params[["log"]]) # Prior/proposal
-    weight_matrix <- compute_weight_matrix(prevalence_map, simulated_prevalences, amis_params, first_weight) # RN derivative (shd take all amis_params)
+    weight_matrix <- compute_weight_matrix(likelihoods, simulated_prevalences, amis_params, first_weight) # RN derivative (shd take all amis_params)
     ess <- calculate_ess(weight_matrix,amis_params[["log"]])
     niter <- niter + 1
     if (min(ess) >= amis_params[["target_ess"]]) break
