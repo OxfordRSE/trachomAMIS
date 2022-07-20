@@ -280,8 +280,8 @@ weighted_mixture <- function(parameters, nsamples, weights, log=F) {
 #' @param n_samples A number of new parameters to sample (integer)
 #' @param df The degrees of freedom for the t-dsitributed proposal distribution.
 #' @param prior list containing the functions \code{rprior} and \code{dprior}
-#' @param log A logical indicating if densities 
-#' @return A list containing \code{params}, an \code{nsamples} x d matrix containing the sampled parameter values and
+#' @param log A logical indicating if densities
+#' @return A list containing \code{params}, an \code{n_samples} x d matrix containing the sampled parameter values and
 #' \code{prior_density}, the corresponding vector of prior densities.
 #'
 #' @seealso \code{\link{fit_mixture}}
@@ -337,12 +337,12 @@ update_mixture_components <- function(mixture, components, t) {
 #' for each sampled parameter value (i.e. each row in \code{param}).
 #' This function returns the first weight
 #' See step (4) of the AMIS algorithm in
-#' Integrating Geostatistical Maps And Transmission Models Using Adaptive
-#' Multiple Importance Sampling
+#' Integrating geostatistical maps and infectious disease transmission models
+#' using adaptive multiple importance sampling.
 #' Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez,
 #' T. Deirdre Hollingsworth, Simon E.F. Spencer
-#' medRxiv 2020.08.03.20146241;
-#' doi: https://doi.org/10.1101/2020.08.03.20146241
+#' Ann. Appl. Stat. 15 (4) 1980 - 1998, December 2021.
+#' DOI: https://doi.org/10.1214/21-AOAS1486
 #'
 #' @param components A list of mixture components made of
 #'     \describe{

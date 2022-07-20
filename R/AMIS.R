@@ -1,5 +1,13 @@
 #' Run the AMIS algorithm to fit a transmission model to a map
 #'
+#' For details of the algorithm, see
+#' Integrating geostatistical maps and infectious disease transmission models
+#' using adaptive multiple importance sampling.
+#' Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez,
+#' T. Deirdre Hollingsworth, Simon E.F. Spencer
+#' Ann. Appl. Stat. 15 (4) 1980 - 1998, December 2021.
+#' DOI: https://doi.org/10.1214/21-AOAS1486
+#'
 #' @param prevalence_map An L x M matrix containing samples from the fitted prevalence map, where L is the number of locations and M the number of samples.
 #' The location names are inherited from \code{rownames(prevalence_map)} if possible. Alternatively, a list with one entry for each timepoint.
 #' Each entry must be a list containing objects \code{data} (an L x M matrix of data as above);
@@ -19,13 +27,12 @@
 #' \item{\code{mixture_samples}the number of samples used to represent the weighted parameters in the mixture fitting.}
 #' \item{\code{df}the degrees of freedom in the t-distributions, used to yield a heavy tailed proposal.}
 #' \item{\code{target_ess}the target effective sample size.}
-#' \item{\code{log} logicalindicating if calculations are to be performed on log scale.} 
+#' \item{\code{log} logical indicating if calculations are to be performed on log scale.}
 #' \item{\code{max_iters}maximum number of AMIS iterations.}
 #' \item{\code{breaks}optional vector specifying the breaks for the histogram.}
 #' }
 #' @param seed Optional seed for the random number generator
-#' @return A list containing a dataframe of the sampled parameters, simulation seed, and weight in each location, plus a vector
-#' #' called ess containing the obtained ess at each location.  
+#' @return A dataframe of the sampled parameters, simulation seed, and weight in each location.
 #' @export
 amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = NULL) {
   if (is.matrix(prevalence_map) || is.data.frame(prevalence_map)) {prevalence_map=list(list(data=prevalence_map))}
