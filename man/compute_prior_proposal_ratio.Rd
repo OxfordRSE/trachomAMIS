@@ -4,38 +4,38 @@
 \alias{compute_prior_proposal_ratio}
 \title{Compute the prior/proposal ratio}
 \usage{
-compute_prior_proposal_ratio(components, param, dprop)
+compute_prior_proposal_ratio(components, param, prior_density, df, log)
 }
 \arguments{
 \item{components}{A list of mixture components made of
 \describe{
-\item{\code{GG}}{A numeric vector}
-\item{\code{Sigma}}{A list}
-\item{\code{Mean}}{A list}
-\item{\code{PP}}{A list}
+\item{\code{G}}{A numeric vector containing the number of components from each AMIS iteration}
+\item{\code{Sigma}}{A list of covariace matrices from each component}
+\item{\code{Mean}}{A list of means from each component}
+\item{\code{probs}}{A list of probability weights for each component (unnormalised)}
 }}
 
-\item{param}{A 2 column matrix containing the values for the two parameters.}
+\item{param}{A matrix containing the sampled parameter vectors.}
 
-\item{dprop}{The proposal distribution as returned by \code{mvtComp()$d}.}
+\item{prior_density}{Vector containing the prior density of each sampled parameter vector.}
+
+\item{df}{The degrees of freedom for the t-distributed proposal distribution.}
+
+\item{log}{A logical indicating whether to work on the log scale.}
 }
 \value{
-A vector contaning the prior/proposal ratio for each row in
+A vector containing the prior/proposal ratio for each row in
 \code{param}
 }
 \description{
 This function returns the ratio between the prior and proposal distribution
-for each sampled parameter value (i.e. each row in PARAM).
-}
-\details{
-This function returns
-\deqn(\frac{\pi(\theta \emph{j)}{\frac{1}{N_1 + ... + N_t}\sum}{u=1}^{t}N_u \phi_u(\theta _j)})
-See step (4) if the AMIS algorithm in
-
+for each sampled parameter value (i.e. each row in \code{param}).
+This function returns the first weight
+See step (4) of the AMIS algorithm in
 Integrating Geostatistical Maps And Transmission Models Using Adaptive
 Multiple Importance Sampling
 Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez,
 T. Deirdre Hollingsworth, Simon E.F. Spencer
 medRxiv 2020.08.03.20146241;
-doi: \url{https://doi.org/10.1101/2020.08.03.20146241}
+doi: https://doi.org/10.1101/2020.08.03.20146241
 }
