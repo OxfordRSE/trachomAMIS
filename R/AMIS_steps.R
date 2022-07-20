@@ -10,14 +10,14 @@
 #' @param An n x timepoints matrix of prevalences simulated from the transmission model.
 #' @param amis_params A list of parameters, e.g. from \code{\link{default_amis_params}}.
 #' @param likelihoods An array with dimension n_tims,n_locs,n_sims -- ie timepoints x locations x simulations (optional).
-#' @return A larger array with the likelihoods of the new simulations joined to the existing array \code{likelihoods}.  
+#' @return A larger array with the likelihoods of the new simulations joined to the existing array \code{likelihoods}.
 compute_likelihood<-function(prevalence_map,simulated_prevalences,amis_params,likelihoods=NULL) {
   n_tims<-length(prevalence_map)
   n_locs <- dim(prevalence_map[[1]]$data)[1]
   n_sims <- dim(simulated_prevalences)[1]
   lik<-array(NA,c(n_tims,n_locs,n_sims)) # this way around to avoid abind -- different to elsewhere
   for (t in 1:n_tims) {
-    lik[t,,]<-evaluate_likelihood(prevalence_map[[t]],simulated_prevalences[,t],amis_params) 
+    lik[t,,]<-evaluate_likelihood(prevalence_map[[t]],simulated_prevalences[,t],amis_params)
   }
   if (!is.null(likelihoods)) {lik<-array(c(likelihoods,lik),c(n_tims,n_locs,dim(likelihoods)[3]+n_sims))}
   return(lik)
@@ -29,7 +29,7 @@ compute_likelihood<-function(prevalence_map,simulated_prevalences,amis_params,li
 #' likelihoods are generated based on samples from a geostatistical map.
 #' @param prevalence_map A list containing objects \code{data} (an L x M matrix of data);
 #' and \code{likelihood} a function taking arguments \code{data} (a matrix of data as above),
-#' \code{prevalence} (a matrix of output from the transmission model) and optional logical \code{log}, which returns the vector of (log)-likelihoods.    
+#' \code{prevalence} (a matrix of output from the transmission model) and optional logical \code{log}, which returns the vector of (log)-likelihoods.
 #' @param prev_sim A vector of simulated prevalences
 #' @param amis_params A list of parameters, e.g. from \code{\link{default_amis_params}}.
 #' @return A locations x simulations matrix of (log-)likelihoods.
@@ -45,7 +45,7 @@ evaluate_likelihood<-function(prevalence_map,prev_sim,amis_params) {
         f[,i]<-rowSums(abs(prevalence_map$data[locs,,drop=FALSE]-prev_sim[i])<=delta/2)/delta
       }
     } else {
-      breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence. 
+      breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence.
       L<-length(breaks)
       lwr<-breaks[1:(L-1)]
       upr<-breaks[2:L]
@@ -63,7 +63,7 @@ evaluate_likelihood<-function(prevalence_map,prev_sim,amis_params) {
 }
 
 #' Compute weight matrix across timepoints using appropriate method
-#' 
+#'
 #' Wrapper function to select appropriate method to calculate weight matrix.
 #' @param likelihoods An array with dimension n_tims,n_locs,n_sims -- ie timepoints x locations x simulations.
 #' @param simulated_prevalence An n_sims x n_tims matrix containing the simulated prevalence values for each of the
@@ -107,7 +107,7 @@ compute_weight_matrix <- function(likelihoods, simulated_prevalence, amis_params
 #' computed from the transmission model for the specific parameter sample.
 #'
 #' @param likelihoods An n_sims x n_locs matrix of (log-)likelihoods
-#' NB: transpose of slice of array. 
+#' NB: transpose of slice of array.
 #' @param prev_sim A vector containing the simulated prevalence value for each parameter sample.
 #' @param amis_params A list of parameters, e.g. from \code{\link{default_amis_params}}
 #' @param weight_matrix An n_sims x n_locs matrix containing the current values of the weights.
@@ -129,7 +129,7 @@ compute_weight_matrix_empirical <- function(likelihoods, prev_sim, amis_params, 
       non_zero_locs<-locs[which(g>0)]
       g<-g[which(g>0)]
       new_weights[i,non_zero_locs]<-weight_matrix[i,non_zero_locs]*likelihoods[i,non_zero_locs]/g*delta
-    }  
+    }
   }
   return(new_weights)
 }
@@ -151,7 +151,7 @@ compute_weight_matrix_empirical <- function(likelihoods, prev_sim, amis_params, 
 #' @param weight_matrix A matrix containing the current values of the weights.
 #' @return An updated weight matrix.
 compute_weight_matrix_histogram<-function(likelihoods, prev_sim, amis_params, weight_matrix) {
-  breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence. 
+  breaks<-amis_params[["breaks"]] # NB top entry in breaks must be strictly larger than the largest possible prevalence.
   L<-length(breaks)
   lwr<-breaks[1:(L-1)]
   upr<-breaks[2:L]
@@ -172,7 +172,7 @@ compute_weight_matrix_histogram<-function(likelihoods, prev_sim, amis_params, we
         non_zero_locs<-locs[which(g>0)]
         g<-g[which(g>0)]
         new_weights[wh,non_zero_locs]<-weight_matrix[wh,non_zero_locs]*likelihoods[wh,non_zero_locs]/rep(g,each=length(wh))*wdt[l]
-      } 
+      }
     }
   }
   return(new_weights)
@@ -180,14 +180,14 @@ compute_weight_matrix_histogram<-function(likelihoods, prev_sim, amis_params, we
 
 #' Compute the current effective sample size
 #'
-#' This function returns the effective sample size (ESS) for each location. 
+#' This function returns the effective sample size (ESS) for each location.
 #'  For each column of the weight matrix \code{weight_mat}, the ESS component is computed as
 #' \deqn{(\sum_{i=1}^{N} w_{i}^2 )^{-1}}
 #' where \eqn{N} is the number of sampled parameter values for each location.
 #'
 #' @param weight_mat The weight matrix. A N x L matrix with L the number of locations
 #'     and N the number of sampled parameter values.
-#' @param log logical indicating if the weights are on the log scale. 
+#' @param log logical indicating if the weights are on the log scale.
 #' @return A vector containing the ESS value for each location.
 #'
 #' @seealso \code{\link{compute_weight_matrix}}
@@ -230,12 +230,12 @@ update_according_to_ess_value <- function(weight_matrix, ess, target_size,log) {
   }
 }
 #' Systematic resampling function
-#' 
+#'
 #' Implement systematic resampling to reduce variance in weighted particle selection
 #' @param nsamples number of samples to draw
 #' @param weights vector of length equal to the number of particles, containing their weights
 #' @param log logical indicating if weights are log-weights
-#' @return vector of indices of the sampled particles 
+#' @return vector of indices of the sampled particles
 systematic_sample <- function(nsamples,weights,log=F) {
   if (log) {
     M<-max(weights)
@@ -248,7 +248,7 @@ systematic_sample <- function(nsamples,weights,log=F) {
   return(1+matrix(rep(u,length(weights))>rep(cum,each=nsamples),nsamples,length(weights))%*%matrix(1,length(weights),1))
 }
 #' Fit mixture to weighted sample
-#' 
+#'
 #' Weights are implemented by using systematic resampling to obtain an unweighted set of parameters.
 #' An unweighted mixture is then fitted using \code{fit_mixture}.
 #' @param parameters An N x d matrix containing the sampled values for the d parameters.
@@ -270,7 +270,6 @@ weighted_mixture <- function(parameters, nsamples, weights, log=F) {
   sampled_idx <- systematic_sample(nsamples,weights,log)
   return(fit_mixture(parameters[sampled_idx,,drop=FALSE]))
 }
-
 #' Sample new parameters
 #'
 #' This function generates \code{nsamples} new model parameter values according the
@@ -287,7 +286,7 @@ weighted_mixture <- function(parameters, nsamples, weights, log=F) {
 #'
 #' @seealso \code{\link{fit_mixture}}
 sample_new_parameters <- function(mixture, n_samples, df, prior, log) {
-  prior_density<-rep(NA,n_samples) 
+  prior_density<-rep(NA,n_samples)
   i<-1
   while (i <= n_samples) {
     compo <- sample(1:mixture$G, 1, prob = mixture$probs)

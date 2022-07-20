@@ -1,7 +1,7 @@
 # Description
 
 This package provides an implementation of the Adaptive Multiple
-Importance Sampling algorithm, as described in 
+Importance Sampling algorithm, as described in
 
 _Integrating Geostatistical Maps And Transmission Models Using Adaptive Multiple Importance Sampling_
 Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez, T. Deirdre Hollingsworth, Simon E.F. Spencer
@@ -41,14 +41,14 @@ param_and_weights <- trachomAMIS::amis(geo_map, model, amis_params)
   
 ## Defining a model function
 
-The `amis` function expects its argument `model_func` to be a function with the 
+The `amis` function expects its argument `model_func` to be a function with the
 following interface
 
 ```
 observables <- model_func(seeds, parameters)
 ```
 
-- `parameters`: A vector of parameter values (`double`)
+- `parameters`: A matrix of parameter values (`double`)
 - `seeds`: A vector of seeds (`integer`)
 
 Function `model_func` is expected to run the model for each pair
@@ -68,12 +68,12 @@ wrapped_model <- function(seeds, parameters) {
 	# write input on disk
 	input_file <- "beta_values.csv"
     write_model_input(seeds, parameters, input_file)
-	
+
 	# run model
     run_model(input_file, mda_file, output_file, infect_output,
                SaveOutput = F, OutSimFilePath = NULL,
                InSimFilePath = NULL)
-			   
+
 	# read results and return obsvervable
     res <- read.csv(output_file)
     return(100 * res[, dim(res)[2]])

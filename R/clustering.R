@@ -1,5 +1,5 @@
 #' Fit an MVN mixture model using mclust
-#' 
+#'
 #' Can handle 1D as well as multivariate clustering. \code{dat} must have \code{nrow} observation and \code{ncol}
 #'  dimensions, even if the number of dimensions is 1.
 #' Uses BIC to determine the best number of components, up to max.components.
@@ -25,7 +25,7 @@ fit_mixture<-function(dat,max.components=10) {
   # Start by fitting one group
   G<-1 # number of groups
   if (d==1) {
-    modelName<-"X" 
+    modelName<-"X"
   } else {
     modelName<-"XXX"
   }

@@ -6,7 +6,7 @@
 #' and \code{likelihood} a function taking arguments \code{data} (a matrix of data as above),
 #' \code{prevalence} (a matrix of output from the transmission model) and optional logical \code{log}, which returns the vector of (log)-likelihoods.
 #' If a likelihood is not specified then it is assumed that
-#' the data consist of samples from a geo-statistical model and empirical methods are used.  
+#' the data consist of samples from a geo-statistical model and empirical methods are used.
 #' @param transmission_model A function taking a vector of n seeds and an n x d matrix of parameter vectors as inputs
 #'  and producing a n x timepoints MATRIX of prevalences as output (it must be a matrix even when timepoints==1).
 #' @param prior A list containing the functions \code{dprior} and \code{rprior} (density and RNG).
@@ -59,7 +59,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   niter <- 1 # number of completed iterations
   for (t in 2:amis_params[["max_iters"]]) {
     print(sprintf("AMIS iteration %g", t))
-    mean_weights <- update_according_to_ess_value(weight_matrix, ess, amis_params[["target_ess"]],amis_params[["log"]]) 
+    mean_weights <- update_according_to_ess_value(weight_matrix, ess, amis_params[["target_ess"]],amis_params[["log"]])
     mixture <- weighted_mixture(param, amis_params[["mixture_samples"]], mean_weights, amis_params[["log"]])
     components <- update_mixture_components(mixture, components, t)
     new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
