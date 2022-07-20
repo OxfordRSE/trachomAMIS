@@ -3,11 +3,9 @@
 This package provides an implementation of the Adaptive Multiple
 Importance Sampling algorithm, as described in
 
-_Integrating Geostatistical Maps And Transmission Models Using Adaptive Multiple Importance Sampling_
-Renata Retkute, Panayiota Touloupou, Maria-Gloria Basanez, T. Deirdre Hollingsworth, Simon E.F. Spencer
-medRxiv 2020.08.03.20146241; doi: https://doi.org/10.1101/2020.08.03.20146241 
-
-Currently, the implementation is limited to 1D models.
+Integrating geostatistical maps and infectious disease transmission models using adaptive multiple importance sampling.
+Renata Retkute, Panayiota Touloupou, María-Gloria Basáñez, T. Deirdre Hollingsworth and Simon E.F. Spencer (2021).
+_Annals of Applied Statistics_, 15 (4), 1980-1998. DOI https://doi.org/10.1214/21-AOAS1486
 
 # Installation
 
@@ -25,7 +23,7 @@ geostatistical map, a model and returns sampled parameters and their
 associated weights.
 
 ```R
-param_and_weights <- trachomAMIS::amis(geo_map, model, amis_params)
+param_and_weights <- AMISforInfectiousDiseases::amis(geo_map, model, prior, amis_params)
 ```
 
 - `geo_map`: A matrix representing the geostatistical map, with one
@@ -35,10 +33,12 @@ param_and_weights <- trachomAMIS::amis(geo_map, model, amis_params)
   function.
 - `amis_params`: A list containing the parameters for the AMIS algorithm.
   - `nsamples`: The number of sample parameters to draw at each iteration.
+  - `mixture_samples`: The number of samples drawn from the weighted distribution to fit a new mixture to.
   - `target_ess`: The target effective sample size.
-  - `T`: The maximum number of iterations.
-  - `delta`: The Randon-Nikodym parameter.
-  
+  - `max_iters`: The maximum number of iterations.
+  - `delta`: The Randon-Nikodym derivative smoothing parameter.
+  - `log`: logical indicating whether to work with log weights.
+
 ## Defining a model function
 
 The `amis` function expects its argument `model_func` to be a function with the
@@ -53,7 +53,9 @@ observables <- model_func(seeds, parameters)
 
 Function `model_func` is expected to run the model for each pair
 (`seed`, `parameter`) and return the corresponding values for the
-observable (_e.g._ infection prevalence).
+observable (_e.g._ infection prevalence). `parameter` must be a matrix
+with ncols equal to the dimension of the parameter space and the output
+must be a matrix with ncols equal to the number of observed timepoints.
 
 ## Wrapping a model
 
