@@ -18,7 +18,7 @@ update_according_to_ess_value(weight_matrix, ess, target_size, log)
 \item{log}{A logical indicating if the weights are logged.}
 }
 \value{
-Vector containing the columns sums of the active rows of the weight matrix.
+Vector containing the row sums of the active columns of the weight matrix.
 }
 \description{
 This function sums the rows of the weight matrix \code{weight_matrix} for which

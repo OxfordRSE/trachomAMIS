@@ -4,7 +4,7 @@
 \alias{default_amis_params}
 \title{Produce list containing the default AMIS parameters}
 \usage{
-default_amis_params()
+default_amis_params(histogram = FALSE)
 }
 \value{
 list containing the default AMIS parameters

@@ -2,26 +2,29 @@
 % Please edit documentation in R/AMIS_steps.R
 \name{compute_weight_matrix}
 \alias{compute_weight_matrix}
-\title{Compute weight matrix}
+\title{Compute weight matrix across timepoints using appropriate method}
 \usage{
-compute_weight_matrix(prev_data, prev_sim, amis_params, first_weight)
+compute_weight_matrix(
+  likelihoods,
+  simulated_prevalence,
+  amis_params,
+  first_weight
+)
 }
 \arguments{
-\item{prev_data}{The geostatistical prevalence data. A n x m matrix where n
-is the number of IUs and m the number of prevalence samples. (double)}
+\item{likelihoods}{An array with dimension n_tims,n_locs,n_sims -- ie timepoints x locations x simulations.}
 
-\item{prev_sim}{A vector containing the simulated prevalence value for each
-parameter sample. (double)}
+\item{simulated_prevalence}{An n_sims x n_tims matrix containing the simulated prevalence values for each of the
+parameter samples. (double)}
 
-\item{amis_params}{A list of parameters, e.g. from \link{default_amis_params}}
+\item{amis_params}{A list of parameters, e.g. from \code{\link{default_amis_params}}.}
 
 \item{first_weight}{A vector containing the values for the right hand side of
-the weight expression. Should be of the same length as \code{prev_sim}.}
+the weight expression. Should be of the same length as the rows in \code{simulated_prevalence}.}
+}
+\value{
+normalised weight matrix.
 }
 \description{
-Compute matrix describing the weights for each parameter sampled, for each
-Implementation Unit (IU). One row per sample, one column per IU.  Each weight
-is computed based on the empirical Randon-Nikodym derivative, taking into account
-geostatistical prevalence data for the specific IU and the prevalence value
-computed from the transmission model for the specific parameter sample.
+Wrapper function to select appropriate method to calculate weight matrix.
 }
