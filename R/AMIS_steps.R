@@ -1,3 +1,13 @@
+#' Produce list containing the default AMIS parameters
+#' @params histogram logical indicating whether to use the histogram method.
+#' @return list containing the default AMIS parameters
+#' @export
+default_amis_params <- function(histogram=FALSE) {
+  amis_params<-list(delta=0.01,nsamples=500,mixture_samples=1000,df=3,target_ess=500,log=F,max_iters=12)
+  if (histogram) {amis_params[["breaks"]]<-0:100/100}
+  return(amis_params)
+}
+
 #' Compute likelihood for each additional simulation across timepoints
 #'
 #' Calls evaluate likelihood for each timepoint.
