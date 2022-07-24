@@ -87,12 +87,20 @@ compute_weight_matrix <- function(likelihoods, simulated_prevalence, amis_params
   n_locs <- dim(likelihoods)[2]
   n_sims <- dim(likelihoods)[3]
   weight_matrix <- matrix(rep(first_weight,n_locs), nrow = n_sims, ncol = n_locs)
+  ## If n_locs = 1, likelihood matrix for given timepoint is an atomic
+  ## vector and doesn't need to be transposed.
+  if (n_locs == 1) {
+    lik_matrix <- function(l) as.matrix(l)
+  } else {
+    lik_matrix <- function(l) t(l)
+  }
   for (t in 1:n_tims) {
+    lik_mat <- lik_matrix(likelihoods[t,,])
     # Update the weights by the latest likelihood (filtering)
     if (is.null(amis_params[["breaks"]])) {
-      weight_matrix <- compute_weight_matrix_empirical(t(likelihoods[t,,]),simulated_prevalence[,t],amis_params,weight_matrix)
+      weight_matrix <- compute_weight_matrix_empirical(lik_mat,simulated_prevalence[,t],amis_params,weight_matrix)
     } else {
-      weight_matrix <- compute_weight_matrix_histogram(t(likelihoods[t,,]),simulated_prevalence[,t],amis_params,weight_matrix)
+      weight_matrix <- compute_weight_matrix_histogram(lik_mat,simulated_prevalence[,t],amis_params,weight_matrix)
     }
   }
   # renormalise weights
