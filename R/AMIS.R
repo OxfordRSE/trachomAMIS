@@ -67,6 +67,7 @@ amis <- function(prevalence_map, transmission_model, prior, amis_params, seed = 
   for (t in 2:amis_params[["max_iters"]]) {
     print(sprintf("AMIS iteration %g", t))
     mean_weights <- update_according_to_ess_value(weight_matrix, ess, amis_params[["target_ess"]],amis_params[["log"]])
+    if ((amis_params[["log"]] && max(mean_weights)==-Inf) || (!amis_params[["log"]] && max(mean_weights)==0)) {stop("No weight on any particles for locations in the active set.\n")}
     mixture <- weighted_mixture(param, amis_params[["mixture_samples"]], mean_weights, amis_params[["log"]])
     components <- update_mixture_components(mixture, components, t)
     new_params <- sample_new_parameters(mixture, nsamples, amis_params[["df"]], prior, amis_params[["log"]])
